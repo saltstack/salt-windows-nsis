@@ -1,6 +1,9 @@
 # salt-windows-nsis
+Scripts for building a NullSoft Salt installer for Windows
 
 ## Overview
+This repository contains PowerShell scripts and NullSoft installer scripts for
+building a Salt installer for Windows operating systems.
 
 ## Try it out
 
@@ -8,7 +11,7 @@
 
 * Prereq 1
 * Prereq 2
-* Prereq 3
+* Prereq 4
 
 ### Build & Run
 
