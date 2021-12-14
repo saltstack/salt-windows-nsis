@@ -60,7 +60,7 @@ If not Exist "%PyDir%\python.exe" (
 Set "CurDir=%~dp0"
 Set "BldDir=%CurDir%buildenv"
 Set "BinDir=%CurDir%buildenv\bin"
-Set "CnfDir=%CurDir%buildenv\conf"
+Set "CnfDir=%CurDir%buildenv\configs"
 Set "InsDir=%CurDir%installer"
 Set "PreDir=%CurDir%prereqs"
 
