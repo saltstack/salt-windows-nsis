@@ -123,9 +123,6 @@ Set "PATH=%PATH%;%PyDir%;%PyDir%\Scripts"
 Set "CurDir=%~dp0"
 for /f "delims=" %%a in ('git rev-parse --show-toplevel') do @set "SrcDir=%%a"
 
-:: The Target Dir is where we will put the installer
-Set "TgtDir=%SrcDir%\build"
-
 :: We need to make sure we can find the Source Directory
 :trim_directory
     If NOT Exist "%SrcDir%\salt" (
@@ -210,29 +207,8 @@ if not %errorLevel%==0 (
 call "%CurDir%build_pkg.bat" "%Version%" "%Python%"
 @echo.
 
-:: Move the Installer to the build directory
-@echo %~nx0 :: Move the Salt Package to the build directory...
-@echo ----------------------------------------------------------------------
-@set "FileName=Salt-Minion-%Version%-Py%Python%-%Arch%-Setup.exe"
-If NOT Exist "%TgtDir%\" (
-    @echo - Making TgtDir: %TgtDir%
-    mkdir "%TgtDir%"
-)
-If Exist "%TgtDir%\%FileName%" (
-    @echo - Removing existing pkg: %TgtDir%\%FileName%
-    del /q "%TgtDir%\%FileName%"
-)
-@echo - Moving package
-@echo - Source: %InsDir%\%FileName%
-@echo - Target: %TgtDir%
-move /Y "%InsDir%\%FileName%" "%TgtDir%\"
-If Exist "%TgtDir%\%FileName%" ( @echo - File moved successfully )
-
 :eof
 @echo.
 @echo ======================================================================
 @echo End of %~nx0
 @echo ======================================================================
-@echo.
-@echo Installation file can be found in the following directory:
-@echo %TgtDir%

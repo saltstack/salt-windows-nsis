@@ -60,13 +60,16 @@ If not Exist "%PyDir%\python.exe" (
 Set "CurDir=%~dp0"
 Set "BldDir=%CurDir%buildenv"
 Set "BinDir=%CurDir%buildenv\bin"
-Set "CnfDir=%CurDir%buildenv\conf"
+Set "CnfDir=%CurDir%buildenv\configs"
 Set "InsDir=%CurDir%installer"
 Set "PreDir=%CurDir%prereqs"
 
 If "%SrcDir%"=="" (
 
     for /f "delims=" %%a in ('git rev-parse --show-toplevel') do @set "SrcDir=%%a"
+
+    :: The Target Dir is where we will put the installer
+    Set "TgtDir=%SrcDir%\build"
 
     :: We need to make sure we can find the Source Directory
     :trim_directory
@@ -673,10 +676,19 @@ if Exist "%CnfDir%\master"^
 :: Make the Salt Minion Installer
 makensis.exe /DSaltVersion=%Version% /DPythonVersion=%Python% "%InsDir%\Salt-Minion-Setup.nsi"
 
+:: Move the Installer to the build directory
+@set "FileName=Salt-Minion-%Version%-Py%Python%-%Arch%-Setup.exe"
+If NOT Exist "%TgtDir%\" mkdir "%TgtDir%"
+If Exist "%TgtDir%\%FileName%" del /q "%TgtDir%\%FileName%"
+move /Y "%InsDir%\%FileName%" "%TgtDir%\"
+@echo.
+
 @echo.
 @echo ======================================================================
 @echo End of %~nx0
 @echo ======================================================================
+@echo Installation file can be found in the following directory:
+@echo %InsDir%
 
 :done
 if [%Version%] == [] pause

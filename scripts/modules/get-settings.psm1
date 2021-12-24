@@ -4,17 +4,24 @@ Function Get-Settings {
 
     $ini = @{}
 
-    If ( -Not (Test-Path $env:SrcDir)) {
+    If ( ($env:ScrDir -eq $null) -or (-Not (Test-Path $env:SrcDir)) ) {
         $env:SrcDir = $(git rev-parse --show-toplevel).Replace("/", "\")
+        Write-Host "before: " + $env:SrcDir
         while ( !(Test-Path "$($env:SrcDir)\salt")) {
             $env:SrcDir = "$($env:SrcDir | Split-Path)"
+            Write-Host "sub: " + $env:SrcDir
             if ($env:SrcDir -eq [System.IO.Path]::GetPathRoot($env:SrcDir)) {
                 Write-Host "Could not find Source Directory: Salt"
                 Write-Host "Make sure the repo is cloned next to a Salt repo"
                 break
             }
         }
+        if ( Test-Path "$($env:env:SrcDir)\salt" ) {
+            $env:SrcDir = "$env:SrcDir\salt"
+        }
     }
+    Write-Host "Final: " + $env:SrcDir
+
     If ( -Not (Test-Path env:PyVerMajor)) { $env:PyVerMajor = "3" }
     If ( -Not (Test-Path env:PyVerMinor)) { $env:PyVerMinor = "8" }
     If ( -Not (Test-Path env:PyDir)) { $env:PyDir = "C:\Python38" }

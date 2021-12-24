@@ -5,12 +5,6 @@ Scripts for building a NullSoft Salt installer for Windows
 This repository contains PowerShell scripts and NullSoft installer scripts for
 building a Salt installer for Windows operating systems.
 
-The [salt-windows-msi](https://github.com/saltstack/salt-windows-msi) repo is
-used to build the MSI installer.
-
-These scripts were taken from the Salt project (``pkg/windows``) to allow for
-faster iteration and testing of the installer itself.
-
 ## Try it out
 Clone this repository alongside the Salt repo. So, for example, if you have
 cloned the Salt repo to ``C:\build`` then clone this repo in the same location.
@@ -28,7 +22,7 @@ The following prerequisites will be installed by the ``build_env.ps1`` script:
 * NSIS Unzip Plugin
 * NSIS EnVar Plugin
 * NSIS AccessControl Plugin
-* NSIS MoveFileFolder Plugi
+* NSIS MoveFileFolder Plugin
 * Microsoft Visual Studio 2015 Build Tools
 * Python 3.8
 * Visual C++ Redistributables
