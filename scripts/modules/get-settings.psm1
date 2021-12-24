@@ -20,7 +20,6 @@ Function Get-Settings {
             $env:SrcDir = "$env:SrcDir\salt"
         }
     }
-    Write-Host "Final: " + $env:SrcDir
 
     If ( -Not (Test-Path env:PyVerMajor)) { $env:PyVerMajor = "3" }
     If ( -Not (Test-Path env:PyVerMinor)) { $env:PyVerMinor = "8" }

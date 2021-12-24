@@ -4,15 +4,50 @@ jobs:
   Run-Config-Tests:
     runs-on: windows-latest
     steps:
-      - name: STEP 1 - Check out repository code
+      - name: STEP 1 - Install Python
+        run: |
+          Invoke-WebRequest -Uri "https://repo.saltproject.io/windows/dependencies/64/python-3.8.8-amd64.exe" -OutFile "${env:TEMP}\python38.exe"
+          Start-Process "${env:TEMP}\python38.exe" -ArgumentList "/Quiet InstallAllUsers=1 TargetDir=`"C:\Python38`" Include_doc=0 Include_tcltk=0 Include_test=0 Include_launcher=1 PrependPath=1 Shortcuts=0" -Wait -NoNewWindow -PassThru
+          Remove-Item "${env:TEMP}\python38.exe"
+          $env:PATH += ";C:\Python38;C:\Python38\Scripts"
+      - name: STEP 2 - Install pytest
+        run: python -m pip install --upgrade pytest pytest-helpers-namespace psutil
+      - name: STEP 3 - Create Directories
+        run: New-Item "${env:TEMP}\Cache" -ItemType Directory -Force
+      - name: STEP 4 - Install NSIS
+        run: |
+          Invoke-WebRequest -Uri "https://repo.saltproject.io/windows/dependencies/nsis-3.03-setup.exe" -OutFile "${env:TEMP}\Cache\nsis.exe"
+          Start-Process "${env:TEMP}\Cache\nsis.exe" -ArgumentList "/S" -Wait -NoNewWindow -PassThru
+          $env:PATH += ";C:\Program Files (x86)\NSIS"
+      - name: STEP 5 - Install NSIS Plugin - NSISUnz
+        run: |
+          Invoke-WebRequest -Uri "https://repo.saltproject.io/windows/dependencies/nsis-plugin-nsisunz.zip" -OutFile "${env:TEMP}\Cache\nsisunz.zip"
+          Expand-Archive -Path "${env:TEMP}\Cache\nsisunz.zip" -Destination "${env:TEMP}\Cache"
+          Move-Item "${env:TEMP}\Cache\nsisunz\Release\nsisunz.dll" "${env:ProgramFiles(x86)}\NSIS\Plugins\x86-ansi\nsisunz.dll"
+      - name: STEP 6 - Install NSIS Plugin - NSISUnzU
+        run: |
+          Invoke-WebRequest -Uri "https://repo.saltproject.io/windows/dependencies/nsis-plugin-nsisunzu.zip" -OutFile "${env:TEMP}\Cache\nsisunzu.zip"
+          Expand-Archive -Path "${env:TEMP}\Cache\nsisunzu.zip" -Destination "${env:TEMP}\Cache"
+          Move-Item "${env:TEMP}\Cache\nsisunzu\Plugin unicode\nsisunz.dll" "${env:ProgramFiles(x86)}\NSIS\Plugins\x86-unicode\nsisunz.dll"
+      - name: STEP 7 - Install NSIS Plugin - EnVar
+        run: |
+          Invoke-WebRequest -Uri "https://repo.saltproject.io/windows/dependencies/nsis-plugin-envar.zip" -OutFile "${env:TEMP}\Cache\envar.zip"
+          Expand-Archive -Path "${env:TEMP}\Cache\envar.zip" -Destination "${env:TEMP}\Cache\nsisenvar"
+          Move-Item "${env:TEMP}\Cache\nsisenvar\Plugins\x86-ansi\EnVar.dll" "${env:ProgramFiles(x86)}\NSIS\Plugins\x86-ansi\EnVar.dll"
+          Move-Item "${env:TEMP}\Cache\nsisenvar\Plugins\x86-unicode\EnVar.dll" "${env:ProgramFiles(x86)}\NSIS\Plugins\x86-unicode\EnVar.dll"
+      - name: STEP 8 - Install NSIS Plugin - AccessControl
+        run: |
+          Invoke-WebRequest -Uri "https://repo.saltproject.io/windows/dependencies/nsis-plugin-accesscontrol.zip" -OutFile "${env:TEMP}\Cache\accesscontrol.zip"
+          Expand-Archive -Path "${env:TEMP}\Cache\accesscontrol.zip" -Destination "${env:TEMP}\Cache\nsisaccesscontrol"
+          Move-Item "${env:TEMP}\Cache\nsisaccesscontrol\Plugins\i386-ansi\AccessControl.dll" "${env:ProgramFiles(x86)}\NSIS\Plugins\x86-ansi\AccessControl.dll"
+          Move-Item "${env:TEMP}\Cache\nsisaccesscontrol\Plugins\i386-unicode\AccessControl.dll" "${env:ProgramFiles(x86)}\NSIS\Plugins\x86-unicode\AccessControl.dll"
+      - name: STEP 9 - Install NSIS Library - MoveFileFolder
+        run: Invoke-WebRequest -Uri "https://repo.saltproject.io/windows/dependencies/nsis-MoveFileFolder.nsh" -OutFile "${env:ProgramFiles(x86)}\NSIS\Include\MoveFileFolder.nsh"
+      - name: Step 10 - Clean Up
+        run: Remove-Item "${env:TEMP}\Cache" -Force -Recurse
+      - name: STEP 11 - Check out repository code
         uses: actions/checkout@v2
-      - name: STEP 2 - Setup build environment
-        run: .\scripts\build_env.ps1
-      - name: STEP 3 - Install pytest
-        run: python -m pip install --upgrade pytest pytest-helpers-namespace
-      - name: STEP 4 - Check out salt repository
-        run: git clone https://github.com/saltstack/salt.git ..\salt
-      - name: STEP 5 - Build test binary
+      - name: STEP 12 - Build test binary
         run: .\tests\build_test_pkg.bat
-      - name: STEP 6 - Run config tests
+      - name: STEP 13 - Run config tests
         run: pytest -vvv -- .\tests\config_tests\
