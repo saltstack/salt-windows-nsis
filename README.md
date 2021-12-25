@@ -1,3 +1,5 @@
+[![Config Tests](https://github.com/saltstack/salt-windows-nsis/actions/workflows/config-tests.yml/badge.svg?branch=main)](https://github.com/saltstack/salt-windows-nsis/actions/workflows/config-tests.yml)
+
 # salt-windows-nsis
 Scripts for building a NullSoft Salt installer for Windows
 
