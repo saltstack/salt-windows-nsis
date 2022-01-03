@@ -26,7 +26,7 @@ def test_config_present(install):
 
 
 def test_config_correct(install):
-    # The config file should be the default, unchanged
+    # The config file should be the custom config, unchanged
     with open(f"{pytest.REPO_DIR}\\custom_conf") as f:
         expected = f.readlines()
 

@@ -4,27 +4,24 @@ import time
 
 
 @pytest.fixture(scope="module")
-def install():
-    pytest.helpers.clean_env()
+def inst_dir():
+    return "C:\\custom_location"
 
-    # Create old config
-    pytest.helpers.old_install()
 
-    pytest.helpers.run_command([pytest.INST_BIN, "/S", "/default-config", "/master=cli_master", "/minion-name=cli_minion"])
+@pytest.fixture(scope="module")
+def install(inst_dir):
+    pytest.helpers.clean_env(inst_dir)
+    pytest.helpers.run_command([pytest.INST_BIN, "/S", f"/install-dir={inst_dir}", "/master=cli_master", "/minion-name=cli_minion"])
     yield
-    pytest.helpers.clean_env()
+    pytest.helpers.clean_env(inst_dir)
 
 
-def test_ssm_present_old_location(install):
-    assert os.path.exists(f"{pytest.OLD_DIR}\\bin\\ssm.exe")
+def test_binaries_present(install, inst_dir):
+    assert os.path.exists(f"{inst_dir}\\bin\\ssm.exe")
 
 
-def test_binaries_present_old_location(install):
-    assert os.path.exists(f"{pytest.OLD_DIR}\\bin\\python.exe")
-
-
-def test_config_present_old_location(install):
-    assert os.path.exists(f"{pytest.OLD_DIR}\\conf\\minion")
+def test_config_present(install):
+    assert os.path.exists(f"{pytest.DATA_DIR}\\conf\\minion")
 
 
 def test_config_correct(install):
@@ -40,7 +37,7 @@ def test_config_correct(install):
         "# Default config from test suite line 6/6\n"
     ]
 
-    with open(f"{pytest.OLD_DIR}\\conf\\minion") as f:
+    with open(f"{pytest.DATA_DIR}\\conf\\minion") as f:
         result = f.readlines()
 
     assert result == expected

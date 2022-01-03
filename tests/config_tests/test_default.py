@@ -20,7 +20,7 @@ def test_config_present(install):
 
 
 def test_config_correct(install):
-    # The config file should be the default, unchanged
+    # The config file should be the default config, unchanged
     with open(f"{pytest.REPO_DIR}\\tests\\_files\\minion") as f:
         expected = f.readlines()
 

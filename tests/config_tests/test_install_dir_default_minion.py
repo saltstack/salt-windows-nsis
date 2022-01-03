@@ -4,15 +4,20 @@ import time
 
 
 @pytest.fixture(scope="module")
-def install():
-    pytest.helpers.clean_env()
-    pytest.helpers.run_command([pytest.INST_BIN, "/S", "/master=cli_master"])
-    yield
-    pytest.helpers.clean_env()
+def inst_dir():
+    return "C:\\custom_location"
 
 
-def test_binaries_present(install):
-    assert os.path.exists(f"{pytest.INST_DIR}\\bin\\ssm.exe")
+@pytest.fixture(scope="module")
+def install(inst_dir):
+    pytest.helpers.clean_env(inst_dir)
+    pytest.helpers.run_command([pytest.INST_BIN, "/S", f"/install-dir={inst_dir}", "/minion-name=cli_minion"])
+    yield {"inst_dir": inst_dir}
+    pytest.helpers.clean_env(inst_dir)
+
+
+def test_binaries_present(install, inst_dir):
+    assert os.path.exists(f"{inst_dir}\\bin\\ssm.exe")
 
 
 def test_config_present(install):
@@ -20,12 +25,12 @@ def test_config_present(install):
 
 
 def test_config_correct(install):
-    # The config file should be the default config with only master set
+    # The config file should be the default config with just the minion set
     expected = [
         "# Default config from test suite line 1/6\n",
-        "master: cli_master\n",
+        "#master: salt\n",
         "# Default config from test suite line 2/6\n",
-        "#id:\n",
+        "id: cli_minion\n",
         "# Default config from test suite line 3/6\n",
         "# Default config from test suite line 4/6\n",
         "# Default config from test suite line 5/6\n",

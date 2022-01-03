@@ -31,7 +31,7 @@ def test_config_present_old_location(install):
 
 
 def test_config_correct(install):
-    # The config file should be the default, unchanged
+    # The config file should be the custom config in the new location, unchanged
     with open(f"{pytest.REPO_DIR}\\custom_conf") as f:
         expected = f.readlines()
 

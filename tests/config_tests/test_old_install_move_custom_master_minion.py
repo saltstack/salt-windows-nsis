@@ -31,7 +31,7 @@ def test_config_present_old_location(install):
 
 
 def test_config_correct(install):
-    # The config file should be the custom config with master and minion set
+    # The config file should be the custom config in the new location with master and minion set
     expected = [
         "# Custom config from test suite line 1/6\n",
         "master: cli_master\n",
