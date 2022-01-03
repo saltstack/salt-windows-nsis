@@ -4,19 +4,24 @@ import time
 
 
 @pytest.fixture(scope="module")
-def install():
-    pytest.helpers.clean_env()
+def inst_dir():
+    return "C:\\custom_location"
 
+
+@pytest.fixture(scope="module")
+def install(inst_dir):
+    pytest.helpers.clean_env(inst_dir)
+    
     # Create a custom config
     pytest.helpers.custom_config()
-
-    pytest.helpers.run_command([pytest.INST_BIN, "/S", "/custom-config=custom_conf"])
+    
+    pytest.helpers.run_command([pytest.INST_BIN, "/S", f"/install-dir={inst_dir}", "/custom-config=custom_conf"])
     yield
-    pytest.helpers.clean_env()
+    pytest.helpers.clean_env(inst_dir)
 
 
-def test_binaries_present(install):
-    assert os.path.exists(f"{pytest.INST_DIR}\\bin\\ssm.exe")
+def test_binaries_present(install, inst_dir):
+    assert os.path.exists(f"{inst_dir}\\bin\\ssm.exe")
 
 
 def test_config_present(install):

@@ -4,37 +4,35 @@ import time
 
 
 @pytest.fixture(scope="module")
-def install():
-    pytest.helpers.clean_env()
+def inst_dir():
+    return "C:\\custom_location"
 
-    # Create old config
-    pytest.helpers.old_install()
 
+@pytest.fixture(scope="module")
+def install(inst_dir):
+    pytest.helpers.clean_env(inst_dir)
+    
     # Create a custom config
     pytest.helpers.custom_config()
-
-    pytest.helpers.run_command([pytest.INST_BIN, "/S", "/custom-config=custom_conf", "/move-config", "/minion-name=cli_minion"])
+    
+    pytest.helpers.run_command([pytest.INST_BIN, "/S", f"/install-dir={inst_dir}", "/custom-config=custom_conf", "/master=cli_master", "/minion-name=cli_minion"])
     yield
-    pytest.helpers.clean_env()
+    pytest.helpers.clean_env(inst_dir)
 
 
-def test_ssm_present_old_location(install):
-    assert os.path.exists(f"{pytest.OLD_DIR}\\bin\\ssm.exe")
+def test_binaries_present(install, inst_dir):
+    assert os.path.exists(f"{inst_dir}\\bin\\ssm.exe")
 
 
-def test_binaries_present_old_location(install):
-    assert os.path.exists(f"{pytest.OLD_DIR}\\bin\\python.exe")
-
-
-def test_config_present_old_location(install):
+def test_config_present(install):
     assert os.path.exists(f"{pytest.DATA_DIR}\\conf\\minion")
 
 
 def test_config_correct(install):
-    # The config file should be the custom config in the new location with only minion set
+    # The config file should be the custom config with master and minion set
     expected = [
         "# Custom config from test suite line 1/6\n",
-        "master: custom_master\n",
+        "master: cli_master\n",
         "# Custom config from test suite line 2/6\n",
         "id: cli_minion\n",
         "# Custom config from test suite line 3/6\n",

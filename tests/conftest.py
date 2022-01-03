@@ -44,6 +44,11 @@ old_content = [
     "# Old config from test suite line 6/6\n"
 ]
 
+INST_DIR = r"C:\Program Files\Salt Project\Salt"
+DATA_DIR = r"C:\ProgramData\Salt Project\Salt"
+SYSTEM_DRIVE = os.environ.get("SystemDrive")
+OLD_DIR = f"{SYSTEM_DRIVE}\\salt"
+
 
 def reg_key_exists(hive=winreg.HKEY_LOCAL_MACHINE, key=None):
     try:
@@ -74,9 +79,9 @@ def pytest_configure():
 
 
 @pytest.helpers.register
-def clean_env():
+def clean_env(inst_dir=INST_DIR):
     # Run uninstaller
-    for uninst_bin in [f"{INST_DIR}\\uninst.exe", f"{OLD_DIR}\\uninst.exe"]:
+    for uninst_bin in [f"{inst_dir}\\uninst.exe", f"{OLD_DIR}\\uninst.exe"]:
         if os.path.exists(uninst_bin):
             run_command([uninst_bin, "/S", "/delete-root-dir", "/delete-install-dir"])
             # This is needed to avoid a race condition where the uninstall is completing
@@ -93,8 +98,8 @@ def clean_env():
     if os.path.exists(DATA_DIR):
         shutil.rmtree(DATA_DIR)
     # Remove install dir
-    if os.path.exists(INST_DIR):
-        shutil.rmtree(INST_DIR)
+    if os.path.exists(inst_dir):
+        shutil.rmtree(inst_dir)
     # Remove old salt dir (C:\salt)
     if os.path.exists(OLD_DIR):
         shutil.rmtree(OLD_DIR)
@@ -159,10 +164,7 @@ def run_command(cmd):
     return result.stdout.strip().replace("/", "\\")
 
 
-DATA_DIR = r"C:\ProgramData\Salt Project\Salt"
-SYSTEM_DRIVE = os.environ.get("SystemDrive")
-OLD_DIR = f"{SYSTEM_DRIVE}\\salt"
-INST_DIR = r"C:\Program Files\Salt Project\Salt"
+# These are at the bottom because they depend on some of the functions
 REPO_DIR = run_command(["git", "rev-parse", "--show-toplevel"])
 INST_BIN = f"{REPO_DIR}\\Salt-Minion-test-Py3-AMD64-Setup.exe"
 

@@ -4,15 +4,20 @@ import time
 
 
 @pytest.fixture(scope="module")
-def install():
-    pytest.helpers.clean_env()
-    pytest.helpers.run_command([pytest.INST_BIN, "/S", "/master=cli_master"])
+def inst_dir():
+    return "C:\\custom_location"
+
+
+@pytest.fixture(scope="module")
+def install(inst_dir):
+    pytest.helpers.clean_env(inst_dir)
+    pytest.helpers.run_command([pytest.INST_BIN, "/S", f"/install-dir={inst_dir}", "/master=cli_master"])
     yield
-    pytest.helpers.clean_env()
+    pytest.helpers.clean_env(inst_dir)
 
 
-def test_binaries_present(install):
-    assert os.path.exists(f"{pytest.INST_DIR}\\bin\\ssm.exe")
+def test_binaries_present(install, inst_dir):
+    assert os.path.exists(f"{inst_dir}\\bin\\ssm.exe")
 
 
 def test_config_present(install):
@@ -31,7 +36,7 @@ def test_config_correct(install):
         "# Default config from test suite line 5/6\n",
         "# Default config from test suite line 6/6\n"
     ]
-
+    
     with open(f"{pytest.DATA_DIR}\\conf\\minion") as f:
         result = f.readlines()
 

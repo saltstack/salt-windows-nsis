@@ -28,7 +28,7 @@ def test_config_present_old_location(install):
 
 
 def test_config_correct(install):
-    # The config file should be the default, unchanged
+    # The config file should be the default config in the new location, unchanged
     with open(f"{pytest.REPO_DIR}\\tests\\_files\\minion") as f:
         expected = f.readlines()
 

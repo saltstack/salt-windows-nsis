@@ -24,7 +24,7 @@ def test_config_present(install):
 
 
 def test_config_correct(install):
-    # The config file should be the custom config with only master set
+    # The config file should be the custom config with only minion set
     expected = [
         "# Custom config from test suite line 1/6\n",
         "master: custom_master\n",
