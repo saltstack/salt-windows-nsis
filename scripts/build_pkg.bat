@@ -65,32 +65,24 @@ Set "CnfDir=%CurDir%buildenv\configs"
 Set "InsDir=%CurDir%installer"
 Set "PreDir=%CurDir%prereqs"
 
-If "%SrcDir%"=="" (
+:: This is the Project directory, regardless of where you run the script from
+For /f "delims=" %%a in ('git rev-parse --show-toplevel') do Set "ProjDir=%%a"
+Set "ProjDir=%ProjDir:/=\%"
 
-    for /f "delims=" %%a in ('git rev-parse --show-toplevel') do @set "SrcDir=%%a"
+:: The Target Dir is where we will put the installer
+Set "TgtDir=%ProjDir%\build"
 
-    :: The Target Dir is where we will put the installer
-    Set "TgtDir=%SrcDir%\build"
+:: The Source Dir is the location of the Salt Code
+:: Should be right next to this project, so get the parent directory
+For %%A in ("%ProjDir%") do Set "SrcDir=%%~dpAsalt"
 
-    :: We need to make sure we can find the Source Directory
-    :trim_directory
-        If NOT Exist "%SrcDir%\salt" (
-            For %%A in ("%SrcDir%") do (
-                if "%%~dpA"=="%SrcDir%" (
-                    echo "Could not find Source Directory salt"
-                    echo "Make sure the repo is cloned next to a salt repo"
-                    exit
-                )
-                @set "SrcDir=%%~dpA"
-            )
-            goto :trim_directory
-        )
-
-    @set "SrcDir=%SrcDir%salt"
-    @echo Found SrcDir: %SrcDir%
-    @echo.
-
+:: We need to make sure we can find the Source Directory
+If NOT Exist "%SrcDir%" (
+    echo "Could not find Source Directory salt"
+    echo "Make sure the repo is cloned next to a salt repo"
+    exit /b 1
 )
+@echo.
 
 :: If Version not defined, Get the version from Git
 if "%Version%"=="" (
@@ -689,7 +681,7 @@ move /Y "%InsDir%\%FileName%" "%TgtDir%\"
 @echo End of %~nx0
 @echo ======================================================================
 @echo Installation file can be found in the following directory:
-@echo %InsDir%
+@echo %TgtDir%
 
 :done
 if [%Version%] == [] pause

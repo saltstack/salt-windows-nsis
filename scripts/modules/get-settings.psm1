@@ -4,22 +4,11 @@ Function Get-Settings {
 
     $ini = @{}
 
-    If ( ($env:ScrDir -eq $null) -or (-Not (Test-Path $env:SrcDir)) ) {
-        $env:SrcDir = $(git rev-parse --show-toplevel).Replace("/", "\")
-        Write-Host "before: " + $env:SrcDir
-        while ( !(Test-Path "$($env:SrcDir)\salt")) {
-            $env:SrcDir = "$($env:SrcDir | Split-Path)"
-            Write-Host "sub: " + $env:SrcDir
-            if ($env:SrcDir -eq [System.IO.Path]::GetPathRoot($env:SrcDir)) {
-                Write-Host "Could not find Source Directory: Salt"
-                Write-Host "Make sure the repo is cloned next to a Salt repo"
-                break
-            }
-        }
-        if ( Test-Path "$($env:env:SrcDir)\salt" ) {
-            $env:SrcDir = "$env:SrcDir\salt"
-        }
-    }
+    # Gets the project directory
+    $env:ProjDir = $(git rev-parse --show-toplevel).Replace("/", "\")
+
+    # Source dir should be next to the project dir
+    $env:SrcDir = "$($env:ProjDir | Split-Path)\salt"
 
     If ( -Not (Test-Path env:PyVerMajor)) { $env:PyVerMajor = "3" }
     If ( -Not (Test-Path env:PyVerMinor)) { $env:PyVerMinor = "8" }
@@ -27,6 +16,7 @@ Function Get-Settings {
 
     # Location where the files are kept
     $Settings = @{
+        "ProjDir"      = "$env:ProjDir"
         "SrcDir"       = "$env:SrcDir"
         "SaltRepo"     = "https://repo.saltproject.io/windows/dependencies"
         "SaltDir"      = "C:\salt"
