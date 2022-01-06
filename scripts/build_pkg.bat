@@ -155,16 +155,14 @@ xcopy /Q /Y "%SrcDir%\conf\minion" "%CnfDir%\"
 @echo %~nx0 :: Copying SSM to buildenv
 @echo ----------------------------------------------------------------------
 
-:: Set the location of the ssm to download
-Set Url64="https://repo.saltproject.io/windows/dependencies/64/ssm-2.24-103-gdee49fc.exe"
-Set Url32="https://repo.saltproject.io/windows/dependencies/32/ssm-2.24-103-gdee49fc.exe"
-
-:: Check for 64 bit by finding the Program Files (x86) directory
+:: Check for 64 bit by finding the Program Files (x86) directory and set the
+:: location of the ssm to download
 If Defined ProgramFiles(x86) (
-    powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url "%Url64%" -file "%BinDir%\ssm.exe"
-) Else (
-    powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url "%Url32%" -file "%BinDir%\ssm.exe"
+Set Url="https://repo.saltproject.io/windows/dependencies/64/ssm-2.24-103-gdee49fc.exe"
+) else (
+Set Url="https://repo.saltproject.io/windows/dependencies/32/ssm-2.24-103-gdee49fc.exe"
 )
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url "%Url%" -file "%BinDir%\ssm.exe"
 @echo.
 
 :: Make sure the "prereq" directory exists and is empty
@@ -183,7 +181,7 @@ If Defined ProgramFiles(x86) goto dependencies_x64
 set Url=https://repo.saltproject.io/windows/dependencies/32/vcredist_x86_2013.exe
 set Name=vcredist_x86_2013.exe
 @echo - Downloading %Name%
-powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
 
 @echo.
 @echo %~nx0 :: Copying Universal C Runtimes X86 to Prerequisites
@@ -191,7 +189,7 @@ powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% 
 set Url=https://repo.saltproject.io/windows/dependencies/32/ucrt_x86.zip
 set Name=ucrt_x86.zip
 @echo - Downloading %Name%
-powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
 
 goto prereq_end
 
@@ -203,7 +201,7 @@ goto prereq_end
 set Url=https://repo.saltproject.io/windows/dependencies/64/vcredist_x64_2013.exe
 set Name=vcredist_x64_2013.exe
 @echo - Downloading %Name%
-powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
 
 @echo.
 @echo %~nx0 :: Copying Universal C Runtimes X64 to Prerequisites
@@ -211,7 +209,7 @@ powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% 
 set Url=https://repo.saltproject.io/windows/dependencies/64/ucrt_x64.zip
 set Name=ucrt_x64.zip
 @echo - Downloading %Name%
-powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
 
 :prereq_end
 
