@@ -106,14 +106,14 @@ $p = New-Item $ini['Settings']['SaltDir'] -ItemType Directory -Force
 # Determine Architecture (32 or 64 bit) and assign variables
 #-------------------------------------------------------------------------------
 If ([System.IntPtr]::Size -ne 4) {
-    Write-Output "Detected 64bit Architecture..."
+    Write-Output " - Detected 64bit Architecture..."
 
     $bitDLLs     = "64bitDLLs"
     $bitPaths    = "64bitPaths"
     $bitPrograms = "64bitPrograms"
     $bitFolder   = "64"
 } Else {
-    Write-Output "Detected 32bit Architecture"
+    Write-Output " - Detected 32bit Architecture"
     $bitDLLs     = "32bitDLLs"
     $bitPaths    = "32bitPaths"
     $bitPrograms = "32bitPrograms"

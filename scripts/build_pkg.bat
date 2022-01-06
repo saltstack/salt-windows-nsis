@@ -65,32 +65,24 @@ Set "CnfDir=%CurDir%buildenv\configs"
 Set "InsDir=%CurDir%installer"
 Set "PreDir=%CurDir%prereqs"
 
-If "%SrcDir%"=="" (
+:: This is the Project directory, regardless of where you run the script from
+For /f "delims=" %%a in ('git rev-parse --show-toplevel') do Set "ProjDir=%%a"
+Set "ProjDir=%ProjDir:/=\%"
 
-    for /f "delims=" %%a in ('git rev-parse --show-toplevel') do @set "SrcDir=%%a"
+:: The Target Dir is where we will put the installer
+Set "TgtDir=%ProjDir%\build"
 
-    :: The Target Dir is where we will put the installer
-    Set "TgtDir=%SrcDir%\build"
+:: The Source Dir is the location of the Salt Code
+:: Should be right next to this project, so get the parent directory
+For %%A in ("%ProjDir%") do Set "SrcDir=%%~dpAsalt"
 
-    :: We need to make sure we can find the Source Directory
-    :trim_directory
-        If NOT Exist "%SrcDir%\salt" (
-            For %%A in ("%SrcDir%") do (
-                if "%%~dpA"=="%SrcDir%" (
-                    echo "Could not find Source Directory salt"
-                    echo "Make sure the repo is cloned next to a salt repo"
-                    exit
-                )
-                @set "SrcDir=%%~dpA"
-            )
-            goto :trim_directory
-        )
-
-    @set "SrcDir=%SrcDir%salt"
-    @echo Found SrcDir: %SrcDir%
-    @echo.
-
+:: We need to make sure we can find the Source Directory
+If NOT Exist "%SrcDir%" (
+    echo "Could not find Source Directory salt"
+    echo "Make sure the repo is cloned next to a salt repo"
+    exit /b 1
 )
+@echo.
 
 :: If Version not defined, Get the version from Git
 if "%Version%"=="" (
@@ -163,16 +155,14 @@ xcopy /Q /Y "%SrcDir%\conf\minion" "%CnfDir%\"
 @echo %~nx0 :: Copying SSM to buildenv
 @echo ----------------------------------------------------------------------
 
-:: Set the location of the ssm to download
-Set Url64="https://repo.saltproject.io/windows/dependencies/64/ssm-2.24-103-gdee49fc.exe"
-Set Url32="https://repo.saltproject.io/windows/dependencies/32/ssm-2.24-103-gdee49fc.exe"
-
-:: Check for 64 bit by finding the Program Files (x86) directory
+:: Check for 64 bit by finding the Program Files (x86) directory and set the
+:: location of the ssm to download
 If Defined ProgramFiles(x86) (
-    powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url "%Url64%" -file "%BinDir%\ssm.exe"
-) Else (
-    powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url "%Url32%" -file "%BinDir%\ssm.exe"
+Set Url="https://repo.saltproject.io/windows/dependencies/64/ssm-2.24-103-gdee49fc.exe"
+) else (
+Set Url="https://repo.saltproject.io/windows/dependencies/32/ssm-2.24-103-gdee49fc.exe"
 )
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url "%Url%" -file "%BinDir%\ssm.exe"
 @echo.
 
 :: Make sure the "prereq" directory exists and is empty
@@ -191,7 +181,7 @@ If Defined ProgramFiles(x86) goto dependencies_x64
 set Url=https://repo.saltproject.io/windows/dependencies/32/vcredist_x86_2013.exe
 set Name=vcredist_x86_2013.exe
 @echo - Downloading %Name%
-powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
 
 @echo.
 @echo %~nx0 :: Copying Universal C Runtimes X86 to Prerequisites
@@ -199,7 +189,7 @@ powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% 
 set Url=https://repo.saltproject.io/windows/dependencies/32/ucrt_x86.zip
 set Name=ucrt_x86.zip
 @echo - Downloading %Name%
-powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
 
 goto prereq_end
 
@@ -211,7 +201,7 @@ goto prereq_end
 set Url=https://repo.saltproject.io/windows/dependencies/64/vcredist_x64_2013.exe
 set Name=vcredist_x64_2013.exe
 @echo - Downloading %Name%
-powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
 
 @echo.
 @echo %~nx0 :: Copying Universal C Runtimes X64 to Prerequisites
@@ -219,7 +209,7 @@ powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% 
 set Url=https://repo.saltproject.io/windows/dependencies/64/ucrt_x64.zip
 set Name=ucrt_x64.zip
 @echo - Downloading %Name%
-powershell -ExecutionPolicy RemoteSigned -File download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
+powershell -ExecutionPolicy RemoteSigned -File %CurDir%\download_url_file.ps1 -url %Url% -file "%PreDir%\%Name%"
 
 :prereq_end
 
@@ -689,7 +679,7 @@ move /Y "%InsDir%\%FileName%" "%TgtDir%\"
 @echo End of %~nx0
 @echo ======================================================================
 @echo Installation file can be found in the following directory:
-@echo %InsDir%
+@echo %TgtDir%
 
 :done
 if [%Version%] == [] pause
