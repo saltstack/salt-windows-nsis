@@ -1,11 +1,10 @@
 # Contributing to salt-windows-nsis
 
 The salt-windows-nsis project team welcomes contributions from the community.
-Before you start working with salt-windows-nsis, please read our
-[Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions
-to this repository must be signed as described on that page. Your signature
-certifies that you wrote the patch or have the right to pass it on as an
-open-source patch.
+If you wish to contribute code and you have not signed our
+[contributor license agreement](https://cla.vmware.com/cla/1/preview) (CLA),
+our bot will update the issue when you open a Pull Request. For any questions
+about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq).
 
 ## Contribution Flow
 
