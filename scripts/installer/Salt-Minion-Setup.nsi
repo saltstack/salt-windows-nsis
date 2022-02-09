@@ -739,6 +739,15 @@ Function .onInit
                 /SD IDOK
             Abort
         ${EndIf}
+    ${Else}
+        # This is the architecture the installer was built on
+        ${If} ${CPUARCH} == "AMD64"
+            MessageBox MB_OK|MB_ICONEXCLAMATION  \
+                "Detected 32-bit Operating system.$\n$\n\
+                Please install the 32-bit version of Salt on this operating system." \
+                /SD IDOK
+            Abort
+        ${EndIf}
     ${EndIf}
 
     InitPluginsDir
