@@ -728,6 +728,19 @@ Function .onInit
     # This function gets executed before any other. This is where we will
     # detect existing installations and config to be used by the installer
 
+    # Make sure we do not allow 32-bit Salt on 64-bit systems
+    # This is the system the installer is running on
+    ${If} ${RunningX64}
+        # This is the architecture the installer was built on
+        ${If} ${CPUARCH} == "x86"
+            MessageBox MB_OK|MB_ICONEXCLAMATION  \
+                "Detected 64-bit Operating system.$\n$\n\
+                Please install the 64-bit version of Salt on this operating system." \
+                /SD IDOK
+            Abort
+        ${EndIf}
+    ${EndIf}
+
     InitPluginsDir
     Call parseInstallerCommandLineSwitches
 
