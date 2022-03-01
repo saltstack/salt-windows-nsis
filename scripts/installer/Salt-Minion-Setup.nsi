@@ -9,7 +9,7 @@
 !define PRODUCT_RUN_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\salt-run.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
-!define OUTFILE "Salt-Minion-${PRODUCT_VERSION}-Py${PYTHON_VERSION}-${CPUARCH}-Setup.exe"
+!define OUTFILE "Salt-Minion-${PRODUCT_VERSION}-${BUILD_TYPE}-${CPUARCH}-Setup.exe"
 !define /date TIME_STAMP "%Y-%m-%d-%H-%M-%S"
 
 # Request admin rights
@@ -37,10 +37,10 @@ ${StrStrAdv}
     !define PRODUCT_VERSION "Undefined Version"
 !endif
 
-!ifdef PythonVersion
-    !define PYTHON_VERSION "${PythonVersion}"
+!ifdef Tiamat
+    !define BUILD_TYPE "Tiamat"
 !else
-    !define PYTHON_VERSION "3"
+    !define BUILD_TYPE "Python 3"
 !endif
 
 !if "$%PROCESSOR_ARCHITECTURE%" == "AMD64"
@@ -501,7 +501,7 @@ FunctionEnd
 ###############################################################################
 # Installation Settings
 ###############################################################################
-Name "${PRODUCT_NAME} ${PRODUCT_VERSION} (Python ${PYTHON_VERSION})"
+Name "${PRODUCT_NAME} ${PRODUCT_VERSION} (${BUILD_TYPE})"
 OutFile "${OutFile}"
 InstallDir "C:\Program Files\Salt Project\Salt"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
@@ -710,7 +710,11 @@ Section "MainSection" SEC01
     # Install files to the Installation Directory
     SetOutPath "$INSTDIR\"
     SetOverwrite off
-    File /r "..\buildenv\"
+    ${If} ${BUILD_TYPE} == "Tiamat"
+        File /r "..\buildenv_tiamat\"
+    ${Else}
+        File /r "..\buildenv\"
+    ${EndIf}
 
     # Set up Root Directory
     CreateDirectory "$RootDir\conf\pki\minion"
@@ -934,7 +938,11 @@ Section -Post
     SetRegView 32  # Set it back to the 32 bit portion of the registry
 
     # Register the Salt-Minion Service
-    nsExec::Exec `$INSTDIR\bin\ssm.exe install salt-minion "$INSTDIR\bin\python.exe" -E -s """$INSTDIR\bin\Scripts\salt-minion""" -c """$RootDir\conf""" -l quiet`
+    ${If} ${BUILD_TYPE} == "Tiamat"
+        nsExec::Exec `$INSTDIR\bin\ssm.exe install salt-minion "$INSTDIR\bin\salt.exe" minion -c """$RootDir\conf""" -l quiet`
+    ${Else}
+        nsExec::Exec `$INSTDIR\bin\ssm.exe install salt-minion "$INSTDIR\bin\python.exe" -E -s """$INSTDIR\bin\Scripts\salt-minion""" -c """$RootDir\conf""" -l quiet`
+    ${EndIf}
     nsExec::Exec "$INSTDIR\bin\ssm.exe set salt-minion Description Salt Minion from saltstack.com"
     nsExec::Exec "$INSTDIR\bin\ssm.exe set salt-minion Start SERVICE_AUTO_START"
     nsExec::Exec "$INSTDIR\bin\ssm.exe set salt-minion AppStopMethodConsole 24000"
