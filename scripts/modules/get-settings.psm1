@@ -65,7 +65,7 @@ Function Get-Settings {
 
     # Filenames for 64 bit Windows
     $64bitPrograms = @{
-        "Python3"     = "python-3.8.8-amd64.exe"
+        "Python3"     = "python-3.9.10-amd64.exe"
         "VCRedist"    = "vcredist_x64_2013.exe"
         "VCRedistReg" = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{53CF6934-A98D-3D84-9146-FC4EDF3D5641}"
     }
@@ -73,7 +73,7 @@ Function Get-Settings {
 
     # Filenames for 32 bit Windows
     $32bitPrograms = @{
-        "Python3"     = "python-3.8.8.exe"
+        "Python3"     = "python-3.9.10.exe"
         "VCRedist"    = "vcredist_x86_2013.exe"
         "VCRedistReg" = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{8122DAB1-ED4D-3676-BB0A-CA368196543E}"
     }
