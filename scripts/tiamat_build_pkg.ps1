@@ -1,9 +1,3 @@
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory=$false)]
-    [Alias("v")]
-    [String] $Version
-)
 # TODO: Add some docs
 Write-Host "==================================================================="
 Write-Host "Salt Windows Build Tiamat Package Script"
@@ -35,21 +29,6 @@ If (Test-Path $salt_pkg_dir) {
     Write-Host "Could not find source directory: $salt_pkg_dir"
     Write-Host "Make sure this repo is cloned next to the salt-pkg repo"
     exit 1
-}
-
-# Get Version if not supplied on the CLI
-If (!$Version) {
-    Write-Host "- Getting version from Git: " -NoNewLine
-    $location = Get-Location
-    Set-Location $salt_pkg_dir
-    $Version = (git describe)
-    Set-Location $location
-    If ($Version) {
-        Write-Host "Success" -ForegroundColor Green
-    } Else {
-        Write-Host "Failed" -ForegroundColor Red
-        exit 1
-    }
 }
 
 # Check prereqs
@@ -94,7 +73,18 @@ If (Test-Path "${env:Temp}\salt") {
 # Find the zip file in the artifacts directory
 Write-Host "- Searching for zipfile in artifacts: " -NoNewLine
 $zip_file = Get-ChildItem -Path $artifacts_dir -Include *.zip -Recurse
+$zip_dir = Split-Path $zip_file
 If ($zip_file) {
+    Write-Host "Success" -ForegroundColor Green
+} Else {
+    Write-Host "Failed" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "- Getting version from artifact: " -NoNewLine
+$dir_name = Split-Path $zip_dir -Leaf
+$version = $dir_name.Split("-")[0]
+If ($version) {
     Write-Host "Success" -ForegroundColor Green
 } Else {
     Write-Host "Failed" -ForegroundColor Red
@@ -172,7 +162,7 @@ If (Test-Path "$prereqs_dir\$name") {
 # Make the Salt Minion Installer
 Write-Host "- Building the Salt Minion installer: " -NoNewLine
 try {
-    & $nsis_bin /DSaltVersion=$Version /DTiamat "$installer_dir\Salt-Minion-Setup.nsi" | Out-Null
+    & $nsis_bin /DSaltVersion=$version /DTiamat "$installer_dir\Salt-Minion-Setup.nsi" | Out-Null
     Write-Host "Success" -ForegroundColor Green
 } catch {
     Write-Host "Failed" -ForegroundColor Red
@@ -182,27 +172,6 @@ try {
 Write-Host "- Getting new installer name: " -NoNewLine
 $installer = (Get-ChildItem -Path $installer_dir -Include *.exe -Recurse).Name
 If ($installer) {
-    Write-Host "Success" -ForegroundColor Green
-} Else {
-    Write-Host "Failed" -ForegroundColor Red
-    exit 1
-}
-
-If (Test-Path "$artifacts_dir\$installer") {
-    Write-Host "- Removing existing artifact: " -NoNewLine
-    Remove-Item -Path "$artifacts_dir\$installer" -Force
-    If (!(Test-Path "$artifacts_dir\$installer")) {
-        Write-Host "Success" -ForegroundColor Green
-    } Else {
-        Write-Host "Failed" -ForegroundColor Red
-        exit 1
-    }
-}
-
-# Move the installer to the artifact directory
-Write-Host "- Moving installer to artifacts directory: " -NoNewLine
-Move-Item -Path "$installer_dir\$installer" -Destination $artifacts_dir -Force
-If (Test-Path "$artifacts_dir\$installer") {
     Write-Host "Success" -ForegroundColor Green
 } Else {
     Write-Host "Failed" -ForegroundColor Red

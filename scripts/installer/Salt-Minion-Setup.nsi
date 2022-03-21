@@ -9,7 +9,6 @@
 !define PRODUCT_RUN_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\salt-run.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
-!define OUTFILE "Salt-Minion-${PRODUCT_VERSION}-${BUILD_TYPE}-${CPUARCH}-Setup.exe"
 !define /date TIME_STAMP "%Y-%m-%d-%H-%M-%S"
 
 # Request admin rights
@@ -37,18 +36,20 @@ ${StrStrAdv}
     !define PRODUCT_VERSION "Undefined Version"
 !endif
 
-!ifdef Tiamat
-    !define BUILD_TYPE "Tiamat"
-!else
-    !define BUILD_TYPE "Python 3"
-!endif
-
 !if "$%PROCESSOR_ARCHITECTURE%" == "AMD64"
     !define CPUARCH "AMD64"
 !else if "$%PROCESSOR_ARCHITEW6432%" == "AMD64"
     !define CPUARCH "AMD64"
 !else
     !define CPUARCH "x86"
+!endif
+
+!ifdef Tiamat
+    !define BUILD_TYPE "Tiamat"
+    !define OUTFILE "Salt-${PRODUCT_VERSION}-Tiamat-${CPUARCH}-Setup.exe"
+!else
+    !define BUILD_TYPE "Python 3"
+    !define OUTFILE "Salt-Minion-${PRODUCT_VERSION}-Py3-${CPUARCH}-Setup.exe"
 !endif
 
 # Part of the Trim function for Strings
@@ -710,7 +711,7 @@ Section "MainSection" SEC01
     # Install files to the Installation Directory
     SetOutPath "$INSTDIR\"
     SetOverwrite off
-    ${If} ${BUILD_TYPE} == "Tiamat"
+    ${If} "${BUILD_TYPE}" == "Tiamat"
         File /r "..\buildenv_tiamat\"
     ${Else}
         File /r "..\buildenv\"
@@ -938,7 +939,7 @@ Section -Post
     SetRegView 32  # Set it back to the 32 bit portion of the registry
 
     # Register the Salt-Minion Service
-    ${If} ${BUILD_TYPE} == "Tiamat"
+    ${If} "${BUILD_TYPE}" == "Tiamat"
         nsExec::Exec `$INSTDIR\bin\ssm.exe install salt-minion "$INSTDIR\bin\salt.exe" minion -c """$RootDir\conf""" -l quiet`
     ${Else}
         nsExec::Exec `$INSTDIR\bin\ssm.exe install salt-minion "$INSTDIR\bin\python.exe" -E -s """$INSTDIR\bin\Scripts\salt-minion""" -c """$RootDir\conf""" -l quiet`
