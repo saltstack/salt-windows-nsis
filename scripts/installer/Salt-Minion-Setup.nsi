@@ -861,6 +861,17 @@ Section -Post
 
     WriteUninstaller "$INSTDIR\uninst.exe"
 
+    # The NSIS installer is a 32bit application and will use the WOW6432Node in
+    # the registry by default. We need to look in the 64 bit location on 64 bit
+    # systems
+    ${If} ${RunningX64}
+        # This would only apply if we are installing the 64 bit version of Salt
+        ${If} ${CPUARCH} == "AMD64"
+            # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
+            SetRegView 64  # View 64 bit portion of the registry
+        ${EndIf}
+    ${EndIf}
+
     # Write Uninstall Registry Entries
     WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" \
         "DisplayName" "$(^Name)"
@@ -888,17 +899,6 @@ Section -Post
     WriteRegStr HKLM "${PRODUCT_CALL_REGKEY}" "Path" "$INSTDIR\bin\"
     WriteRegStr HKLM "${PRODUCT_MINION_REGKEY}" "" "$INSTDIR\salt-minion.bat"
     WriteRegStr HKLM "${PRODUCT_MINION_REGKEY}" "Path" "$INSTDIR\bin\"
-
-    # The NSIS installer is a 32bit application and will use the WOW6432Node in
-    # the registry by default. We need to look in the 64 bit location on 64 bit
-    # systems
-    ${If} ${RunningX64}
-        # This would only apply if we are installing the 64 bit version of Salt
-        ${If} ${CPUARCH} == "AMD64"
-            # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
-            SetRegView 64  # View 64 bit portion of the registry
-        ${EndIf}
-    ${EndIf}
 
     # Write Salt Configuration Registry Entries
     # We want to write EXPAND_SZ string types to allow us to use environment
