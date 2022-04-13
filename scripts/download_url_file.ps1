@@ -8,9 +8,10 @@ Param(
 )
 
 # Gets the project directory
-$ProjDir = $(git rev-parse --show-toplevel).Replace("/", "\")
+$script_dir = dir "$($myInvocation.MyCommand.Definition)"
+$script_dir = $script_dir.DirectoryName
 
-Import-Module "$ProjDir\scripts\Modules\download-module.psm1"
+Import-Module "$script_dir\Modules\download-module.psm1"
 
 DownloadFileWithProgress $url $file
 

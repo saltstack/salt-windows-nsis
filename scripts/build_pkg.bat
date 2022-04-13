@@ -633,7 +633,7 @@ If Exist "%BinDir%\Scripts\salt-unity*"^
 @echo ----------------------------------------------------------------------
 :: Make the Master installer if the nullsoft script exists
 If Exist "%InsDir%\Salt-Setup.nsi"^
-    makensis.exe /DSaltVersion=%Version% /DPythonVersion=%Python% "%InsDir%\Salt-Setup.nsi"
+    makensis.exe /DSaltVersion=%Version% "%InsDir%\Salt-Setup.nsi"
 
 :: Remove files not needed for Salt Minion
 :: salt
@@ -665,7 +665,7 @@ if Exist "%CnfDir%\master"^
     del /Q "%CnfDir%\master" 1>nul
 
 :: Make the Salt Minion Installer
-makensis.exe /DSaltVersion=%Version% /DPythonVersion=%Python% "%InsDir%\Salt-Minion-Setup.nsi"
+makensis.exe /DSaltVersion=%Version% "%InsDir%\Salt-Minion-Setup.nsi"
 
 :: Move the Installer to the build directory
 @set "FileName=Salt-Minion-%Version%-Py%Python%-%Arch%-Setup.exe"
