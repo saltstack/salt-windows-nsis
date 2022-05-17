@@ -16,17 +16,20 @@ $config_dir    = "$script_dir\buildenv_tiamat\configs"
 $installer_dir = "$script_dir\installer"
 $prereqs_dir   = "$script_dir\prereqs"
 $project_dir   = (Get-Item (git rev-parse --show-toplevel)).FullName
-$salt_pkg_dir  = "$((Get-Item $project_dir).parent.FullName)\salt-pkg"
 $artifacts_dir = "$salt_pkg_dir\artifacts"
 Write-Host "Success" -ForegroundColor Green
 
 # Validate Directories
 Write-Host "- Validating Source Directory: " -NoNewLine
-If (Test-Path $salt_pkg_dir) {
+if (Test-Path "$((Get-Item $project_dir).parent.FullName)\salt-pkg") {
+    $salt_pkg_dir  = "$((Get-Item $project_dir).parent.FullName)\salt-pkg"
+    Write-Host "Success" -ForegroundColor Green
+} elseif (Test-Path "$((Get-Item $project_dir).parent.FullName)\salt-pkg-priv") {
+    $salt_pkg_dir = "$((Get-Item $project_dir).parent.FullName )\salt-pkg-priv"
     Write-Host "Success" -ForegroundColor Green
 } else {
     Write-Host "Failed" -ForegroundColor Red
-    Write-Host "Could not find source directory: $salt_pkg_dir"
+    Write-Host "Could not find source directory in $((Get-Item $project_dir).parent.FullName)"
     Write-Host "Make sure this repo is cloned next to the salt-pkg repo"
     exit 1
 }
