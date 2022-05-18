@@ -180,6 +180,7 @@ Function pageCheckExistingInstall
         # Esc and Enter don't work. Nor can you use Alt+N and Alt+B. Setting
         # the focus to the Next button seems to fix this
         # Set focus on Next button (0x1)
+        # Next=1, cancel=2, back=3
         GetDlgItem $R1 $HWNDPARENT 1
         SendMessage $HWNDPARENT ${WM_NEXTDLGCTL} $R1 1
     ${EndIf}
@@ -435,7 +436,7 @@ Function pageMinionConfig_Leave
             "The $APPDATA\Salt Project\Salt directory is not empty.$\n\
             These files will need to be moved manually." \
             /SD IDOK IDCANCEL cancel
-        # OK: We're continuing wihtout moving existing config
+        # OK: We're continuing without moving existing config
         StrCpy $MoveExistingConfig 0
         Goto done
 
@@ -695,9 +696,11 @@ Section "MainSection" SEC01
         # Make sure the target directory exists
         nsExec::Exec "md $APPDATA\Salt Project\Salt"
         # Take ownership of the C:\salt directory
+        detailPrint "Taking ownership: $RootDir"
         nsExec::Exec "takeown /F $RootDir /R"
         # Move the C:\salt directory to the new location
         StrCpy $switch_overwrite 0
+        detailPrint "Moving $RootDir to $APPDATA"
         !insertmacro MoveFolder "$RootDir" "$APPDATA\Salt Project\Salt" "*.*"
         # Make RootDir the new location
         StrCpy $RootDir "$APPDATA\Salt Project\Salt"
@@ -934,6 +937,7 @@ Section -Post
 
     # Check Program Files (x86) first
     # We want to use the environment variables instead of the hardcoded path
+    # TODO: Do we need this now that we're not allowing 32bit on 64bit?
     ${StrContains} $0 "Program Files (x86)" $INSTDIR
     StrCmp $0 "" +2  # If it's empty, skip the next line
         StrCpy $RegInstDir "%ProgramFiles(x86)%\Salt Project\Salt"
@@ -1480,8 +1484,11 @@ Function getExistingInstallation
     ReadRegStr $R0 HKLM "SOFTWARE\Salt Project\Salt" "install_dir"
     StrCmp $R0 "" checkOldInstallation
     StrCpy $ExistingInstallation 1
+
     # Set INSTDIR to the location in the registry
-    StrCpy $INSTDIR $R0
+    # TODO: We don't want to do this. It breaks the file picker dialog box
+    # StrCpy $INSTDIR $R0
+
     # Set RootDir, if defined
     ReadRegStr $R0 HKLM "SOFTWARE\Salt Project\Salt" "root_dir"
     StrCmp $R0 "" finished
