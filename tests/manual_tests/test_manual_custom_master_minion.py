@@ -1,6 +1,5 @@
 import pytest
 import os
-import time
 
 
 @pytest.fixture(scope="module")

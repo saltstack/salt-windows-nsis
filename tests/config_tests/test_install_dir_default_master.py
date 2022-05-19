@@ -1,6 +1,5 @@
 import pytest
 import os
-import time
 
 
 @pytest.fixture(scope="module")
@@ -36,7 +35,7 @@ def test_config_correct(install):
         "# Default config from test suite line 5/6\n",
         "# Default config from test suite line 6/6\n"
     ]
-    
+
     with open(f"{pytest.DATA_DIR}\\conf\\minion") as f:
         result = f.readlines()
 

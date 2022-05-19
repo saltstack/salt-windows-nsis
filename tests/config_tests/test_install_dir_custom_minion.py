@@ -1,6 +1,5 @@
 import pytest
 import os
-import time
 
 
 @pytest.fixture(scope="module")
@@ -11,10 +10,10 @@ def inst_dir():
 @pytest.fixture(scope="module")
 def install(inst_dir):
     pytest.helpers.clean_env(inst_dir)
-    
+
     # Create a custom config
     pytest.helpers.custom_config()
-    
+
     pytest.helpers.run_command([pytest.INST_BIN, "/S", f"/install-dir={inst_dir}", "/custom-config=custom_conf", "/minion-name=cli_minion"])
     yield
     pytest.helpers.clean_env(inst_dir)
