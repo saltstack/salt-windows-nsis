@@ -180,6 +180,7 @@ Function pageCheckExistingInstall
         # Esc and Enter don't work. Nor can you use Alt+N and Alt+B. Setting
         # the focus to the Next button seems to fix this
         # Set focus on Next button (0x1)
+        # Next=1, cancel=2, back=3
         GetDlgItem $R1 $HWNDPARENT 1
         SendMessage $HWNDPARENT ${WM_NEXTDLGCTL} $R1 1
     ${EndIf}
@@ -435,7 +436,7 @@ Function pageMinionConfig_Leave
             "The $APPDATA\Salt Project\Salt directory is not empty.$\n\
             These files will need to be moved manually." \
             /SD IDOK IDCANCEL cancel
-        # OK: We're continuing wihtout moving existing config
+        # OK: We're continuing without moving existing config
         StrCpy $MoveExistingConfig 0
         Goto done
 
@@ -695,10 +696,17 @@ Section "MainSection" SEC01
         # Make sure the target directory exists
         nsExec::Exec "md $APPDATA\Salt Project\Salt"
         # Take ownership of the C:\salt directory
+        detailPrint "Taking ownership: $RootDir"
         nsExec::Exec "takeown /F $RootDir /R"
         # Move the C:\salt directory to the new location
         StrCpy $switch_overwrite 0
-        !insertmacro MoveFolder "$RootDir" "$APPDATA\Salt Project\Salt" "*.*"
+        detailPrint "Moving $RootDir to $APPDATA"
+        IfFileExists "$RootDir\conf" 0 +2
+        !insertmacro MoveFolder "$RootDir\conf" "$APPDATA\Salt Project\Salt\conf" "*.*"
+        IfFileExists "$RootDir\srv" 0 +2
+        !insertmacro MoveFolder "$RootDir\srv" "$APPDATA\Salt Project\Salt\srv" "*.*"
+        IfFileExists "$RootDir\var" 0 +2
+        !insertmacro MoveFolder "$RootDir\var" "$APPDATA\Salt Project\Salt\var" "*.*"
         # Make RootDir the new location
         StrCpy $RootDir "$APPDATA\Salt Project\Salt"
     ${EndIf}
@@ -788,9 +796,32 @@ Function .onInit
 
     checkExistingInstallation:
         # Check for existing installation
+
+        # The NSIS installer is a 32bit application and will use the WOW6432Node in
+        # the registry by default. We need to look in the 64 bit location on 64 bit
+        # systems
+        ${If} ${RunningX64}
+            # This would only apply if we are installing the 64 bit version of Salt
+            ${If} ${CPUARCH} == "AMD64"
+                # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
+                SetRegView 64  # View the 64 bit portion of the registry
+            ${EndIf}
+        ${EndIf}
+
         ReadRegStr $R0 HKLM \
             "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
             "UninstallString"
+
+        # Puts the nullsoft installer back to its default
+        SetRegView 32  # Set it back to the 32 bit portion of the registry
+
+        # If not found, look in 32 bit
+        ${If} $R0 == ""
+            ReadRegStr $R0 HKLM \
+                "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
+                "UninstallString"
+        ${EndIf}
+
         # If it's empty it's not installed
         StrCmp $R0 "" skipUninstall
 
@@ -934,6 +965,7 @@ Section -Post
 
     # Check Program Files (x86) first
     # We want to use the environment variables instead of the hardcoded path
+    # TODO: Do we need this now that we're not allowing 32bit on 64bit?
     ${StrContains} $0 "Program Files (x86)" $INSTDIR
     StrCmp $0 "" +2  # If it's empty, skip the next line
         StrCpy $RegInstDir "%ProgramFiles(x86)%\Salt Project\Salt"
@@ -1043,7 +1075,6 @@ SectionEnd
 Function ${un}uninstallSalt
 
     # WARNING: Any changes made here need to be reflected in the MSI uninstaller
-
     # Make sure we're in the right directory
     ${If} $INSTDIR == "c:\salt\bin\Scripts"
       StrCpy $INSTDIR "C:\salt"
@@ -1059,28 +1090,35 @@ Function ${un}uninstallSalt
       StrCpy $INSTDIR "$ProgramFiles64\Salt Project\Salt"
     ${EndIf}
 
-    # The NSIS installer is a 32bit application and will use the WOW6432Node in
-    # the registry by default. We need to look in the 64 bit location on 64 bit
-    # systems
-    ${If} ${RunningX64}
-        # This would only apply if we are installing the 64 bit version of Salt
-        ${If} ${CPUARCH} == "AMD64"
-            # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
-            SetRegView 64  # View 64 bit portion of the registry
-        ${EndIf}
-    ${EndIf}
-
-    # Get Root Directory from the Registry
-    ReadRegStr $RootDir HKLM "SOFTWARE\Salt Project\Salt" "root_dir"
-    SetRegView 32  # Set it back to the 32 bit portion (default)
-
     # Stop and Remove salt-minion service
-    nsExec::Exec 'net stop salt-minion'
-    nsExec::Exec 'sc delete salt-minion'
+    nsExec::Exec "net stop salt-minion"
+    nsExec::Exec "sc delete salt-minion"
 
     # Stop and remove the salt-master service
-    nsExec::Exec 'net stop salt-master'
-    nsExec::Exec 'sc delete salt-master'
+    nsExec::Exec "net stop salt-master"
+    nsExec::Exec "sc delete salt-master"
+
+    # We need to make sure the service is stopped and removed before deleting
+    # any files
+    StrCpy $0 1  # Tries
+    StrCpy $1 1  # Service Present
+    loop:
+        detailPrint "Verifying salt-minion deletion: try $0"
+        nsExec::ExecToStack 'net start | FIND /C /I "salt-minion"'
+        pop $2  # First on the stack is the return code
+        pop $1  # Next on the stack is standard out (service present)
+        ${If} $1 == 1
+            ${If} $0 < 5
+                IntOp $0 $0 + 1
+                Sleep 1000
+                goto loop
+            ${Else}
+                MessageBox MB_OK|MB_ICONEXCLAMATION \
+                    "Failed to remove salt-minion service" \
+                    /SD IDOK
+                Abort
+            ${EndIf}
+        ${EndIf}
 
     # Remove files
     Delete "$INSTDIR\uninst.exe"
@@ -1088,6 +1126,42 @@ Function ${un}uninstallSalt
     Delete "$INSTDIR\salt*"
     Delete "$INSTDIR\vcredist.exe"
     RMDir /r "$INSTDIR\bin"
+
+    # Remove everything in the 64 bit registry
+
+    # The NSIS installer is a 32bit application and will use the WOW6432Node in
+    # the registry by default. We need to look in the 64 bit location on 64 bit
+    # systems
+    ${If} ${RunningX64}
+        # This would only apply if we are installing the 64 bit version of Salt
+        ${If} ${CPUARCH} == "AMD64"
+            # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
+            SetRegView 64  # View the 64 bit portion of the registry
+
+            # Get Root Directory from the Registry (64 bit)
+            ReadRegStr $RootDir HKLM "SOFTWARE\Salt Project\Salt" "root_dir"
+
+            # Remove Registry entries
+            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
+
+            # Remove Command Line Registry entries
+            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_CALL_REGKEY}"
+            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_CP_REGKEY}"
+            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_KEY_REGKEY}"
+            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_MASTER_REGKEY}"
+            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_MINION_REGKEY}"
+            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_RUN_REGKEY}"
+            DeleteRegKey HKLM "SOFTWARE\Salt Project"
+        ${EndIf}
+    ${EndIf}
+
+    # Remove everything in the 32 bit registry
+    SetRegView 32  # Set it to 32 bit
+
+    ${If} $RootDir == ""
+        # Get Root Directory from the Registry (32 bit)
+        ReadRegStr $RootDir HKLM "SOFTWARE\Salt Project\Salt" "root_dir"
+    ${EndIf}
 
     # Remove Registry entries
     DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
@@ -1099,20 +1173,7 @@ Function ${un}uninstallSalt
     DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_MASTER_REGKEY}"
     DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_MINION_REGKEY}"
     DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_RUN_REGKEY}"
-
-    # Remove Salt Configuration Registry entries
-    # The NSIS installer is a 32bit application and will use the WOW6432Node in
-    # the registry by default. We need to look in the 64 bit location on 64 bit
-    # systems
-    ${If} ${RunningX64}
-        # This would only apply if we are installing the 64 bit version of Salt
-        ${If} ${CPUARCH} == "AMD64"
-            # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
-            SetRegView 64  # View 64 bit portion of the registry
-        ${EndIf}
-    ${EndIf}
     DeleteRegKey HKLM "SOFTWARE\Salt Project"
-    SetRegView 32  # Set it back to the 32 bit portion (default)
 
     # SystemDrive is not a built in NSIS constant, so we need to get it from
     # the environment variables
@@ -1169,6 +1230,14 @@ Function ${un}uninstallSalt
             SetOutPath "$SysDrive"  # Can't remove CWD
             RMDir /r $0
         ${EndIf}
+
+        # If RootDir is still empty, use C:\salt
+        ${If} $RootDir == ""
+            StrCpy $RootDir "C:\salt"
+        ${EndIf}
+
+        # Expand any environment variables
+        ExpandEnvStrings $RootDir $RootDir
 
         # Prompt for the removal of the Root Directory which contains the config
         # and pki directories
@@ -1444,6 +1513,7 @@ Function getExistingInstallation
     # installer. CPUARCH is defined when the installer is built and is based on
     # the machine that built the installer, not the target system
     # There are 3 scenarios here:
+    # TODO: May not need the 32 bit on 64 bit scenario anymore
     ${If} ${RunningX64}
         ${If} ${CPUARCH} == "AMD64"
             # 64 bit Salt on 64 bit system (C:\Program Files)
@@ -1480,12 +1550,18 @@ Function getExistingInstallation
     ReadRegStr $R0 HKLM "SOFTWARE\Salt Project\Salt" "install_dir"
     StrCmp $R0 "" checkOldInstallation
     StrCpy $ExistingInstallation 1
+
     # Set INSTDIR to the location in the registry
     StrCpy $INSTDIR $R0
+    # Expand any environment variables it contains
+    ExpandEnvStrings $INSTDIR $INSTDIR
+
     # Set RootDir, if defined
     ReadRegStr $R0 HKLM "SOFTWARE\Salt Project\Salt" "root_dir"
     StrCmp $R0 "" finished
     StrCpy $RootDir $R0
+    # Expand any environment variables it contains
+    ExpandEnvStrings $RootDir $RootDir
     Goto finished
 
     # Check for existing old method installation

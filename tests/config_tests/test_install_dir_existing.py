@@ -1,6 +1,5 @@
 import pytest
 import os
-import time
 
 
 @pytest.fixture(scope="module")
@@ -11,7 +10,7 @@ def inst_dir():
 @pytest.fixture(scope="module")
 def install(inst_dir):
     pytest.helpers.clean_env(inst_dir)
-    
+
     # Create an existing config
     pytest.helpers.existing_config()
 
