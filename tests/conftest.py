@@ -166,5 +166,5 @@ def run_command(cmd):
 
 # These are at the bottom because they depend on some of the functions
 REPO_DIR = run_command(["git", "rev-parse", "--show-toplevel"])
-INST_BIN = f"{REPO_DIR}\\Salt-Minion-test-Py3-AMD64-Setup.exe"
+INST_BIN = f"{REPO_DIR}\\test-setup.exe"
 

@@ -33,6 +33,6 @@ xcopy /Q /Y "%ProjDir%\tests\_files\minion" "%ProjDir%\scripts\buildenv\configs\
 @echo Build fake salt installer using NSIS
 @echo ==========================================================================
 makensis.exe /DSaltVersion=test "%ProjDir%\scripts\installer\Salt-Minion-Setup.nsi"
-move "%ProjDir%\scripts\installer\Salt-Minion-test-Py3-AMD64-Setup.exe" "%ProjDir%"
+move "%ProjDir%\scripts\installer\Salt-Minion-test-*-Setup.exe" "%ProjDir%\test-setup.exe"
 
 :end
