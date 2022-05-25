@@ -6,7 +6,7 @@ echo - Uninstalls Python and removes the Python directory
 echo ======================================================================
 echo.
 
-rem Make sure the script is run as Admin
+:: Make sure the script is run as Admin
 echo Administrative permissions required. Detecting permissions ...
 echo ----------------------------------------------------------------------
 net session >nul 2>&1
@@ -19,12 +19,10 @@ if %errorLevel%==0 (
 echo.
 
 :CheckPython27
-if exist "\Python27" goto RemovePython27
-
-goto CheckPython35
+if not exist "\Python27" goto CheckPython35
 
 :RemovePython27
-    rem Uninstall Python 2.7
+    :: Uninstall Python 2.7
     echo %0 :: Uninstalling Python 2 ...
     echo -----------------------------------------------------------------------
     echo %0 :: - 2.7.12 (32 bit)
@@ -46,10 +44,10 @@ goto CheckPython35
 
     echo.
 
-    rem Wipe the Python directory
+    :: Wipe the Python directory
     echo %0 :: Removing the C:\Python27 Directory ...
     echo -----------------------------------------------------------------------
-    rd /s /q C:\Python27
+    if exist "C:\Python27" rd /s /q "C:\Python27"
     if %errorLevel%==0 (
         echo Successful
     ) else (
@@ -57,9 +55,7 @@ goto CheckPython35
     )
 
 :CheckPython35
-if exist "\Python35" goto RemovePython35
-
-goto CheckPython37
+if not exist "\Python35" goto CheckPython37
 
 :RemovePython35
     echo %0 :: Uninstalling Python 3 ...
@@ -84,22 +80,18 @@ goto CheckPython37
         "%LOCALAPPDATA%\Package Cache\{06e841fa-ca3b-4886-a820-cd32c614b0c1}\python-3.5.4" /uninstall /quiet
     )
 
-    rem wipe the Python directory
+    :: wipe the Python directory
     echo %0 :: Removing the C:\Python35 Directory ...
     echo -----------------------------------------------------------------------
-    rd /s /q "C:\Python35"
+    if exist "C:\Python35" rd /s /q "C:\Python35"
     if %errorLevel%==0 (
         echo Successful
     ) else (
         echo Failed, please remove manually
     )
 
-    goto eof
-
 :CheckPython37
-if exist "\Python37" goto RemovePython37
-
-goto CheckPython38
+if not exist "\Python37" goto CheckPython38
 
 :RemovePython37
     echo %0 :: Uninstalling Python 3.7 ...
@@ -119,22 +111,18 @@ goto CheckPython38
     echo %0 :: - Python Launcher
     msiexec.exe /x {D722DA3A-92F5-454A-BD5D-A48C94D82300} /quiet /qn
 
-    rem wipe the Python directory
+    :: wipe the Python directory
     echo %0 :: Removing the C:\Python37 Directory ...
     echo -----------------------------------------------------------------------
-    rd /s /q "C:\Python37"
+    if exist "C:\Python37" rd /s /q "C:\Python37"
     if %errorLevel%==0 (
         echo Successful
     ) else (
         echo Failed, please remove manually
     )
 
-    goto eof
-
 :CheckPython38
-if exist "\Python38" goto RemovePython38
-
-goto eof
+if not exist "\Python38" goto CheckPython39
 
 :RemovePython38
     echo %0 :: Uninstalling Python 3.8 ...
@@ -154,17 +142,48 @@ goto eof
     echo %0 :: - Python Launcher
     msiexec.exe /x {3B53E5B7-CFC4-401C-80E9-FF7591C58741} /quiet /qn
 
-    rem wipe the Python directory
+    :: wipe the Python directory
     echo %0 :: Removing the C:\Python38 Directory ...
     echo -----------------------------------------------------------------------
-    rd /s /q "C:\Python38"
+    if exist "C:\Python38" rd /s /q "C:\Python38"
     if %errorLevel%==0 (
         echo Successful
     ) else (
         echo Failed, please remove manually
     )
 
-    goto eof
+:CheckPython39
+if not exist "\Python39" goto eof
+
+:RemovePython39
+    echo %0 :: Uninstalling Python 3.9 ...
+    echo -----------------------------------------------------------------------
+    :: 64 bit
+    if exist "%LOCALAPPDATA%\Package Cache\{c1729c3e-67d4-4cc7-bab3-6dd84444ca47}" (
+        echo %0 :: - 3.9.10 64bit
+        "%LOCALAPPDATA%\Package Cache\{c1729c3e-67d4-4cc7-bab3-6dd84444ca47}\python-3.9.10-amd64.exe" /uninstall /quiet
+    )
+
+    :: 32 bit
+    if exist "%LOCALAPPDATA%\Package Cache\{87d78079-31e7-4e20-ab9b-a57bf64b87d1}" (
+        echo %0 :: - 3.8.8 32bit
+        "%LOCALAPPDATA%\Package Cache\{87d78079-31e7-4e20-ab9b-a57bf64b87d1}\python-3.9.10" /uninstall /quiet
+    )
+    :: Python Launcher, seems to be the same for 32 and 64 bit
+    echo %0 :: - Python Launcher
+    msiexec.exe /x {0F246F5F-0282-4320-B735-7A5FDE7EA7D6} /quiet /qn
+
+    :: wipe the Python directory
+    echo %0 :: Removing the C:\Python39 Directory ...
+    echo -----------------------------------------------------------------------
+    if exist "C:\Python39" rd /s /q "C:\Python39"
+    if %errorLevel%==0 (
+        echo Successful
+    ) else (
+        echo Failed, please remove manually
+    )
+
+goto eof
 
 :eof
 echo.
