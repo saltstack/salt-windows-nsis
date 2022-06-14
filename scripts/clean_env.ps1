@@ -1,3 +1,20 @@
+<#
+.SYNOPSIS
+Script that cleans the build environment
+
+.DESCRIPTION
+This script uninstalls all versions of Python on the System. It also removes
+Python from the system path. Additional, it removes the Python Launcher.
+
+.EXAMPLE
+clean_env.ps1
+
+#>
+
+# Script Preferences
+$ProgressPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
+
 #-------------------------------------------------------------------------------
 # Import Modules
 #-------------------------------------------------------------------------------

@@ -1,14 +1,27 @@
-# TODO: Add some docs
+<#
+.SYNOPSIS
+Script that builds a NullSoft Installer package for Salt based on a Tiamat
+build.
+
+.DESCRIPTION
+This script creates a NullSoft Installer for Salt based on the artifact created
+by salt-pkg or salt-pkg-priv.
+
+.EXAMPLE
+tiamat_build_pkg.ps1
+
+#>
+# Script Preferences
+$ProgressPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
+
 Write-Host "==================================================================="
 Write-Host "Salt Windows Build Tiamat Package Script"
 Write-Host "==================================================================="
 
-# Script Preferences
-$ErrorActionPreference = "Stop"
-$global:ProgressPreference = "SilentlyContinue"
-
-# Defining Variables
-Write-Host "- Defining Variables: " -NoNewLine
+#-------------------------------------------------------------------------------
+# Variables
+#-------------------------------------------------------------------------------
 $script_dir    = dir "$($myInvocation.MyCommand.Definition)"
 $script_dir    = $script_dir.DirectoryName
 $bin_dir       = "$script_dir\buildenv_tiamat\bin"
@@ -16,8 +29,10 @@ $config_dir    = "$script_dir\buildenv_tiamat\configs"
 $installer_dir = "$script_dir\installer"
 $prereqs_dir   = "$script_dir\prereqs"
 $project_dir   = (Get-Item (git rev-parse --show-toplevel)).FullName
-Write-Host "Success" -ForegroundColor Green
 
+#-------------------------------------------------------------------------------
+# Validate Environment
+#-------------------------------------------------------------------------------
 # Validate Project Dir
 Write-Host "- Validating Project Directory: " -NoNewLine
 if (Test-Path "$((Get-Item $project_dir).parent.FullName)\salt-pkg") {
@@ -44,7 +59,9 @@ if (Test-Path "$artifacts_dir") {
     exit 1
 }
 
-# Check prereqs
+#-------------------------------------------------------------------------------
+# Check PreReqs
+#-------------------------------------------------------------------------------
 Write-Host "- Checking for NullSoft Compiler: " -NoNewLine
 If (Test-Path "${env:ProgramFiles}\NSIS") {
     $nsis_dir = "${env:ProgramFiles}\NSIS"
@@ -83,6 +100,9 @@ If (Test-Path "${env:Temp}\salt") {
     }
 }
 
+#-------------------------------------------------------------------------------
+# Prepare the Artifact
+#-------------------------------------------------------------------------------
 # Find the zip file in the artifacts directory
 Write-Host "- Searching for zipfile in artifacts: " -NoNewLine
 $zip_file = Get-ChildItem -Path $artifacts_dir -Include *.zip -Recurse
@@ -94,6 +114,7 @@ If ($zip_file) {
     exit 1
 }
 
+# Get the Version from the Artifact
 Write-Host "- Getting version from artifact: " -NoNewLine
 $dir_name = Split-Path $zip_dir -Leaf
 $version = $dir_name.Split("-")[0]
@@ -114,6 +135,9 @@ try {
     exit 1
 }
 
+#-------------------------------------------------------------------------------
+# Create the build_env
+#-------------------------------------------------------------------------------
 # Move the extracted directory to bin
 Write-Host "- Moving salt folder to bin: " -NoNewLine
 Move-Item -Path "${env:Temp}\salt\salt" -Destination $bin_dir
@@ -136,6 +160,9 @@ If ("$bin_dir\ssm.exe") {
 
 # TODO: Copy master/minion config files from salt project
 
+#-------------------------------------------------------------------------------
+# Stage the PreReqs
+#-------------------------------------------------------------------------------
 # Make sure the prereqs dir is empty
 If (Test-Path $prereqs_dir) {
     Write-Host "- Cleaning prereqs dir: " -NoNewLine
@@ -172,6 +199,9 @@ If (Test-Path "$prereqs_dir\$name") {
     exit 1
 }
 
+#-------------------------------------------------------------------------------
+# Make the Minion Installer
+#-------------------------------------------------------------------------------
 # Make the Salt Minion Installer
 Write-Host "- Building the Salt Minion installer: " -NoNewLine
 try {

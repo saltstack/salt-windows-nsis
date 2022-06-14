@@ -1,24 +1,18 @@
-#===============================================================================
-# You may need to change the execution policy in order to run this script
-# Run the following in powershell:
-#
-# Set-ExecutionPolicy RemoteSigned
-#
-#===============================================================================
-#
-#          FILE: dev_env.ps1
-#
-#   DESCRIPTION: Development Environment Installation for Windows
-#
-#          BUGS: https://github.com/saltstack/salt-windows-bootstrap/issues
-#
-#     COPYRIGHT: (c) 2012-2017 by the SaltStack Team, see AUTHORS.rst for more
-#                details.
-#
-#       LICENSE: Apache 2.0
-#  ORGANIZATION: SaltStack (saltstack.org)
-#       CREATED: 03/10/2017
-#===============================================================================
+<#
+.SYNOPSIS
+Script that installs NullSoft Installer
+
+.DESCRIPTION
+This script installs the NullSoft installer and all Plugins and Libraries
+required to build the Salt installer
+
+.EXAMPLE
+install_nsis.ps1
+
+#>
+# Script Preferences
+$ProgressPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 
 #-------------------------------------------------------------------------------
 # Import Modules
@@ -58,11 +52,6 @@ If (!(Get-IsAdministrator)) {
 Write-Host $("=" * 80)
 Write-Host "Install NullSoft Installer Software and Plugins"
 Write-Host $("-" * 80)
-
-Write-Host "Setting Script Preferences: " -NoNewline
-$Global:ProgressPreference = "SilentlyContinue"
-$Global:ErrorActionPreference = "Stop"
-Write-Host "Success" -ForegroundColor Green
 
 Write-Host "Setting Variables: " -NoNewLine
 $OS_ARCH      = (Get-CimInstance Win32_OperatingSystem).OSArchitecture

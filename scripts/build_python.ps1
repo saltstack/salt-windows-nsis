@@ -1,24 +1,19 @@
-﻿#===============================================================================
-# You may need to change the execution policy in order to run this script
-# Run the following in powershell:
-#
-# Set-ExecutionPolicy RemoteSigned
-#
-#===============================================================================
-#
-#          FILE: dev_env.ps1
-#
-#   DESCRIPTION: Development Environment Installation for Windows
-#
-#          BUGS: https://github.com/saltstack/salt-windows-bootstrap/issues
-#
-#     COPYRIGHT: (c) 2012-2017 by the SaltStack Team, see AUTHORS.rst for more
-#                details.
-#
-#       LICENSE: Apache 2.0
-#  ORGANIZATION: SaltStack (saltstack.org)
-#       CREATED: 03/10/2017
-#===============================================================================
+﻿<#
+.SYNOPSIS
+Script that builds Python from source
+
+.DESCRIPTION
+This script builds python from Source. It then creates the directory
+structure as created by the Python installer in C:\Python##. This includes
+all header files, scripts, dlls, library files, and pip.
+
+This script will also install the Visual Studio Build Tools needed to
+build Python from source.
+
+.EXAMPLE
+build_python.ps1 -Version 3.8.13
+
+#>
 param(
     [Parameter(Mandatory=$false)]
     [ValidatePattern("^\d{1,2}.\d{1,2}.\d{1,2}$")]

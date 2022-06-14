@@ -1,3 +1,16 @@
+<#
+.SYNOPSIS
+Script that builds a NullSoft Installer package for Salt
+
+.DESCRIPTION
+This script takes the contents of the Python Directory that has Salt installed
+and creates a NullSoft Installer based on that directory.
+
+.EXAMPLE
+build_pkg.ps1 -Version 3005
+
+#>
+
 param(
     [Parameter(Mandatory=$false)]
     [Alias("v")]
@@ -7,10 +20,17 @@ param(
     [String] $Version
 )
 
+# Script Preferences
+$ProgressPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
+
 Write-Host $("=" * 80)
 Write-Host "Build NullSoft Installer for Salt"
 Write-Host $("-" * 80)
 
+#-------------------------------------------------------------------------------
+# Variables
+#-------------------------------------------------------------------------------
 # Script Variables
 $OS_ARCH        = (Get-CimInstance Win32_OperatingSystem).OSArchitecture
 if ( $OS_ARCH -eq "64-bit" ) {
@@ -372,7 +392,7 @@ Write-Host "Success" -ForegroundColor Green
 #-------------------------------------------------------------------------------
 # Remove Non-Windows State Modules
 #-------------------------------------------------------------------------------
-Write-Host "Removing Non-Windows Execution Modules: " -NoNewline
+Write-Host "Removing Non-Windows State Modules: " -NoNewline
 $states = "acme",
           "alternatives",
           "apt",

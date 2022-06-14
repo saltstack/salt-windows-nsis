@@ -1,24 +1,21 @@
-#===============================================================================
-# You may need to change the execution policy in order to run this script
-# Run the following in powershell:
-#
-# Set-ExecutionPolicy RemoteSigned
-#
-#===============================================================================
-#
-#          FILE: dev_env.ps1
-#
-#   DESCRIPTION: Development Environment Installation for Windows
-#
-#          BUGS: https://github.com/saltstack/salt-windows-bootstrap/issues
-#
-#     COPYRIGHT: (c) 2012-2017 by the SaltStack Team, see AUTHORS.rst for more
-#                details.
-#
-#       LICENSE: Apache 2.0
-#  ORGANIZATION: SaltStack (saltstack.org)
-#       CREATED: 03/10/2017
-#===============================================================================
+<#
+.SYNOPSIS
+Script that installs Salt in the Python environment
+
+.DESCRIPTION
+This script installs Salt into the Python environment built by the
+build_python.ps1 script. It puts required dlls in the Python directory
+and removes items not needed by a Salt installation on Windows such as Python
+docs and test files. Once this script completes, the Python directory is
+ready to be packaged.
+
+.EXAMPLE
+install_salt.ps1
+
+#>
+# Script Preferences
+$ProgressPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
 
 #-------------------------------------------------------------------------------
 # Import Modules
@@ -55,15 +52,12 @@ If (!(Get-IsAdministrator)) {
 }
 
 Write-Host $("=" * 80)
-Write-Host "Install Salt"
+Write-Host "Install Salt into Build Environment"
 Write-Host $("-" * 80)
 
-Write-Host "Setting Script Preferences: " -NoNewline
-$Global:ProgressPreference = "SilentlyContinue"
-$Global:ErrorActionPreference = "Stop"
-Write-Host "Success" -ForegroundColor Green
-
-Write-Host "Setting Variables: " -NoNewLine
+#-------------------------------------------------------------------------------
+# Define Variables
+#-------------------------------------------------------------------------------
 # System Properties
 $OS_ARCH        = (Get-CimInstance Win32_OperatingSystem).OSArchitecture
 
@@ -83,8 +77,6 @@ if ( $OS_ARCH -eq "64-bit" ) {
 } else {
     $SALT_DEP_URL   = "https://repo.saltproject.io/windows/dependencies/32"
 }
-
-Write-Host "Success" -ForegroundColor Green
 
 #-------------------------------------------------------------------------------
 # Verify Salt Clone
@@ -272,5 +264,5 @@ if ( ! (Test-Path -Path "$SCRIPTS_DIR\pywin32_*") ) {
 # Finished
 #-------------------------------------------------------------------------------
 Write-Host $("-" * 80)
-Write-Host "Install Salt Completed"
+Write-Host "Install Salt into Build Environment"
 Write-Host $("=" * 80)

@@ -1,3 +1,26 @@
+<#
+.SYNOPSIS
+Parent script that runs all other scripts required to build Salt
+
+.DESCRIPTION
+This script Cleans, Installs Dependencies, Builds Python, Installs Salt,
+and builds the NullSoft Installer. It depends on the following Scripts
+and are called in this order:
+
+- clean_env.ps1
+- install_nsis.ps1
+- build_python.ps1
+- install_salt.ps1
+- build_pkg.ps1
+
+.EXAMPLE
+build.ps1
+
+.EXAMPLE
+build.ps1 -Version 3005 -PythonVersion 3.8.13
+
+#>
+
 param(
     [Parameter(Mandatory=$false)]
     [Alias("v")]
@@ -29,13 +52,15 @@ param(
     # Default is: 3.8.13
     [String] $PythonVersion = "3.8.13"
 )
+
 # Script Preferences
 $ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
 
-# Build Variables
-$SCRIPT_DIR     = (Get-ChildItem "$($myInvocation.MyCommand.Definition)").DirectoryName
+#-------------------------------------------------------------------------------
 # Import Modules
+#-------------------------------------------------------------------------------
+$SCRIPT_DIR     = (Get-ChildItem "$($myInvocation.MyCommand.Definition)").DirectoryName
 Import-Module $SCRIPT_DIR\Modules\uac-module.psm1
 
 #-------------------------------------------------------------------------------
