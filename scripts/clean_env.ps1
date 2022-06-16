@@ -50,10 +50,12 @@ If (!(Get-IsAdministrator)) {
 }
 
 Write-Host $("=" * 80)
-Write-Host "Cleaning Build Environment"
+Write-Host "Cleaning Build Environment" -ForegroundColor Cyan
 Write-Host $("-" * 80)
 
+#-------------------------------------------------------------------------------
 # Remove all Python 2 Installations
+#-------------------------------------------------------------------------------
 $packages = Get-Package | where { $_.Name -match "^Python 2.*$" }
 $packages | ForEach-Object {
     $pkg_name = $_.Name
@@ -69,8 +71,9 @@ $packages | ForEach-Object {
         exit 1
     }
 }
-
+#-------------------------------------------------------------------------------
 # Remove all Python 3 Installations
+#-------------------------------------------------------------------------------
 $packages = Get-Package | where {($_.Name -match "^Python 3.*$") -and ($_.ProviderName -eq "Programs") }
 if ( $packages -gt 0 ) {
     $packages | ForEach-Object {
@@ -91,7 +94,9 @@ if ( $packages -gt 0 ) {
     }
 }
 
+#-------------------------------------------------------------------------------
 # Remove Python Launcher
+#-------------------------------------------------------------------------------
 $packages = Get-Package | where { $_.Name -match "^Python Launcher$" }
 $packages | ForEach-Object {
     $pkg_name = $_.Name
@@ -108,7 +113,9 @@ $packages | ForEach-Object {
     }
 }
 
+#-------------------------------------------------------------------------------
 # Remove all Python Directories
+#-------------------------------------------------------------------------------
 $paths = "$env:SystemDrive\Python27",
          "$env:SystemDrive\Python36",
          "$env:SystemDrive\Python37",
@@ -128,8 +135,9 @@ $paths | ForEach-Object {
     }
 }
 
-# Clean the Path environment variable
-
+#-------------------------------------------------------------------------------
+# Clean Path Environment Variable
+#-------------------------------------------------------------------------------
 $system_paths = [Environment]::GetEnvironmentVariable("PATH", "Machine").Split(";")
 $new_path = [System.Collections.ArrayList]::New()
 
@@ -148,7 +156,9 @@ $system_paths | ForEach-Object {
 
 [Environment]::SetEnvironmentVariable("PATH", $new_path -join ";", [EnvironmentVariableTarget]::Machine)
 
-
+#-------------------------------------------------------------------------------
+# Done
+#-------------------------------------------------------------------------------
 Write-Host $("-" * 80)
-Write-Host "Cleaning Build Environment Complete"
+Write-Host "Cleaning Build Environment Complete" -ForegroundColor Cyan
 Write-Host $("=" * 80)

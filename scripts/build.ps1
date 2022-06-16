@@ -30,6 +30,13 @@ param(
     [String] $Version,
 
     [Parameter(Mandatory=$false)]
+    [ValidateSet("x86", "x64")]
+    [Alias("a")]
+    # The System Architecture to build. "x86" will build a 32-bit installer.
+    # "x64" will build a 64-bit installer. Default is: x64
+    $Architecture = "x64",
+
+    [Parameter(Mandatory=$false)]
     [ValidatePattern("^\d{1,2}.\d{1,2}.\d{1,2}$")]
     [ValidateSet(
         # Until Pythonnet supports newer versions
@@ -91,8 +98,41 @@ If (!(Get-IsAdministrator)) {
     }
 }
 
+#-------------------------------------------------------------------------------
+# Variables
+#-------------------------------------------------------------------------------
+$PROJECT_DIR    = $(git rev-parse --show-toplevel)
+$SALT_REPO_URL  = "https://github.com/saltstack/salt"
+$SALT_SRC_DIR   = "$( (Get-Item $PROJECT_DIR).Parent.FullName )\salt"
+
+#-------------------------------------------------------------------------------
+# Verify Salt and Version
+#-------------------------------------------------------------------------------
+
+if ( [String]::IsNullOrEmpty($Version) ) {
+    if ( ! (Test-Path -Path $SALT_SRC_DIR) ) {
+        Write-Host "Missing Salt Source Directory: $SALT_SRC_DIR"
+        exit 1
+    }
+    Push-Location $SALT_SRC_DIR
+    $Version = $( git describe )
+    $Version = $Version.Trim("v")
+    Pop-Location
+    if ( [String]::IsNullOrEmpty($Version) ) {
+        Write-Host "Failed to get version from $SALT_SRC_DIR"
+        exit 1
+    }
+}
+
+#-------------------------------------------------------------------------------
+# Start the Script
+#-------------------------------------------------------------------------------
+
 Write-Host $("#" * 80)
-Write-Host "Build Salt"
+Write-Host "Build Salt Installer Packages" -ForegroundColor Cyan
+Write-Host "- Salt Version:   $Version"
+Write-Host "- Python Version: $PythonVersion"
+Write-Host "- Architecture:   $Architecture"
 Write-Host $("#" * 80)
 
 #-------------------------------------------------------------------------------
@@ -116,7 +156,9 @@ if ( ! $? ) {
 #-------------------------------------------------------------------------------
 # Build Python
 #-------------------------------------------------------------------------------
-powershell -file "$SCRIPT_DIR\build_python.ps1" -Version $PythonVersion
+powershell -file "$SCRIPT_DIR\build_python.ps1" `
+           -Version $PythonVersion `
+           -Architecture $Architecture
 if ( ! $? ) {
     Write-Host "Failed to build Python"
     exit 1
@@ -125,7 +167,7 @@ if ( ! $? ) {
 #-------------------------------------------------------------------------------
 # Install Salt
 #-------------------------------------------------------------------------------
-powershell -file "$SCRIPT_DIR\install_salt.ps1"
+powershell -file "$SCRIPT_DIR\install_salt.ps1" -Architecture $Architecture
 if ( ! $? ) {
     Write-Host "Failed to install Salt"
     exit 1
@@ -134,16 +176,18 @@ if ( ! $? ) {
 #-------------------------------------------------------------------------------
 # Build Package
 #-------------------------------------------------------------------------------
-if ( $Version ) {
-    powershell -file "$SCRIPT_DIR\build_pkg.ps1" -Version $Version
-} else {
-    powershell -file "$SCRIPT_DIR\build_pkg.ps1"
+$KeywordArguments = @{Architecture = $Architecture}
+if ( ! [String]::IsNullOrEmpty($Version) ) {
+    $KeywordArguments.Add("Version", $Version)
 }
+
+powershell -file "$SCRIPT_DIR\build_pkg.ps1" @KeywordArguments
+
 if ( ! $? ) {
     Write-Host "Failed to build package"
     exit 1
 }
 
 Write-Host $("#" * 80)
-Write-Host "Build Salt Completed"
+Write-Host "Build Salt $Architecture Completed" -ForegroundColor Cyan
 Write-Host $("#" * 80)

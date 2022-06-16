@@ -13,6 +13,15 @@ ready to be packaged.
 install_salt.ps1
 
 #>
+param(
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("x86", "x64")]
+    [Alias("a")]
+    # The System Architecture to build. "x86" will build a 32-bit installer.
+    # "x64" will build a 64-bit installer. Default is: x64
+    $Architecture = "x64"
+)
+
 # Script Preferences
 $ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
@@ -51,15 +60,9 @@ If (!(Get-IsAdministrator)) {
     }
 }
 
-Write-Host $("=" * 80)
-Write-Host "Install Salt into Build Environment"
-Write-Host $("-" * 80)
-
 #-------------------------------------------------------------------------------
 # Define Variables
 #-------------------------------------------------------------------------------
-# System Properties
-$OS_ARCH        = (Get-CimInstance Win32_OperatingSystem).OSArchitecture
 
 # Python Variables
 $PY_VERSION     = "3.8"
@@ -70,24 +73,23 @@ $SITE_PKGS_DIR  = "$PYTHON_DIR\Lib\site-packages"
 
 # Script Variables
 $PROJECT_DIR     = $(git rev-parse --show-toplevel)
+$SALT_REPO_URL   = "https://github.com/saltstack/salt"
 $SALT_SRC_DIR    = "$( (Get-Item $PROJECT_DIR).Parent.FullName )\salt"
 $SALT_DEPS       = "$SALT_SRC_DIR\requirements\static\pkg\py$PY_VERSION\windows.txt"
-if ( $OS_ARCH -eq "64-bit" ) {
+if ( $Architecture -eq "x64" ) {
     $SALT_DEP_URL   = "https://repo.saltproject.io/windows/dependencies/64"
 } else {
     $SALT_DEP_URL   = "https://repo.saltproject.io/windows/dependencies/32"
 }
 
 #-------------------------------------------------------------------------------
-# Verify Salt Clone
+# Start the Script
 #-------------------------------------------------------------------------------
-Write-Host "Verifying Salt Clone: " -NoNewline
-if ( Test-Path -Path "$SALT_SRC_DIR\.git" ) {
-    Write-Host "Success" -ForegroundColor Green
-} else {
-    Write-Host "Failed" -ForegroundColor Red
-    exit 1
-}
+
+Write-Host $("=" * 80)
+Write-Host "Install Salt into Python Environment" -ForegroundColor Cyan
+Write-Host "- Architecture: $Architecture"
+Write-Host $("-" * 80)
 
 #-------------------------------------------------------------------------------
 # Installing Salt
@@ -264,5 +266,6 @@ if ( ! (Test-Path -Path "$SCRIPTS_DIR\pywin32_*") ) {
 # Finished
 #-------------------------------------------------------------------------------
 Write-Host $("-" * 80)
-Write-Host "Install Salt into Build Environment"
+Write-Host "Install Salt into Python Environment Complete" `
+    -ForegroundColor Cyan
 Write-Host $("=" * 80)

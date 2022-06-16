@@ -35,7 +35,14 @@ param(
     # supported up to 3.8. So we're pinned to the latest version of Python 3.8.
     # We may have to drop support for pycurl.
     # Default is: 3.8.13
-    [String] $Version = "3.8.13"
+    [String] $Version = "3.8.13",
+
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("x86", "x64")]
+    [Alias("a")]
+    # The System Architecture to build. "x86" will build a 32-bit installer.
+    # "x64" will build a 64-bit installer. Default is: x64
+    $Architecture = "x64"
 )
 
 # Script Preferences
@@ -76,8 +83,14 @@ If (!(Get-IsAdministrator)) {
     }
 }
 
+#-------------------------------------------------------------------------------
+# Start the Script
+#-------------------------------------------------------------------------------
+
 Write-Host $("=" * 80)
-Write-Host "Build Python Environment from Source"
+Write-Host "Build Python from Source" -ForegroundColor Cyan
+Write-Host "- Python Version: $Version"
+Write-Host "- Architecture:   $Architecture"
 Write-Host $("-" * 80)
 
 #-------------------------------------------------------------------------------
@@ -146,11 +159,15 @@ $SCRIPTS_DIR    = "$PYTHON_DIR\Scripts"
 $VS_BLD_TOOLS   = "https://aka.ms/vs/15/release/vs_buildtools.exe"
 if ( $OS_ARCH -eq "64-bit" ) {
     $VS_CL_BIN      = "${env:ProgramFiles(x86)}\Microsoft Visual Studio 14.0\VC\bin\cl.exe"
+} else {
+    $VS_CL_BIN      = "${env:ProgramFiles}\Microsoft Visual Studio 14.0\VC\bin\cl.exe"
+}
+
+if ( $Architecture -eq "x64" ) {
     $PY_BLD_DIR     = "$PY_SRC_DIR\PCbuild\amd64"
     $SALT_DEP_URL   = "https://repo.saltproject.io/windows/dependencies/64"
 } else {
-    $VS_CL_BIN      = "${env:ProgramFiles}\Microsoft Visual Studio 14.0\VC\bin\cl.exe"
-    $PY_BLD_DIR     = "$PY_SRC_DIR\PCbuild\x86"
+    $PY_BLD_DIR     = "$PY_SRC_DIR\PCbuild\win32"
     $SALT_DEP_URL   = "https://repo.saltproject.io/windows/dependencies/32"
 }
 
@@ -163,7 +180,7 @@ Write-Host "Looking for Visual Studio 2017: " -NoNewline
 if ( Test-Path -Path $VS_CL_BIN ) {
     Write-Host "Success" -ForegroundColor Green
 } else {
-    Write-Host "Missing" -ForegroundColor DarkYellow
+    Write-Host "Missing" -ForegroundColor Yellow
     Write-Host "Downloading Visual Studio 2017 build tools: " -NoNewline
     Invoke-WebRequest -Uri "$VS_BLD_TOOLS" -OutFile "$env:TEMP\vs_buildtools.exe"
     if ( Test-Path -Path "$env:TEMP\vs_buildtools.exe" ) {
@@ -178,14 +195,19 @@ if ( Test-Path -Path $VS_CL_BIN ) {
         New-Item -Path "$($env:TEMP)\build_tools" -ItemType Directory | Out-Null
     }    
     
-    . $env:TEMP\vs_buildtools.exe --layout "$env:TEMP\build_tools" `
-        --add Microsoft.VisualStudio.Workload.MSBuildTools `
-        --add Microsoft.VisualStudio.Workload.VCTools `
-        --add Microsoft.VisualStudio.Component.Windows81SDK `
-        --add Microsoft.VisualStudio.Component.Windows10SDK.17763 `
-        --add Microsoft.VisualStudio.Component.VC.140 `
-        --add Microsoft.Component.VC.Runtime.UCRTSDK `
-        --lang en-US --includeRecommended --quiet --wait | Out-Null
+    Start-Process -FilePath "$env:TEMP\vs_buildtools.exe" `
+                  -ArgumentList "--layout `"$env:TEMP\build_tools`"", `
+                                "--add Microsoft.VisualStudio.Workload.MSBuildTools", `
+                                "--add Microsoft.VisualStudio.Workload.VCTools", `
+                                "--add Microsoft.VisualStudio.Component.Windows81SDK", `
+                                "--add Microsoft.VisualStudio.Component.Windows10SDK.17763", `
+                                "--add Microsoft.VisualStudio.Component.VC.140", `
+                                "--add Microsoft.Component.VC.Runtime.UCRTSDK", `
+                                "--lang en-US", `
+                                "--includeRecommended", `
+                                "--quiet", `
+                                "--wait" `
+                  -Wait -WindowStyle Hidden
     if ( Test-Path -Path "$env:TEMP\build_tools\vs_buildtools.exe" ) {
         Write-Host "Success" -ForegroundColor Green
     } else {
@@ -193,15 +215,42 @@ if ( Test-Path -Path $VS_CL_BIN ) {
         exit 1
     }
 
+    # Serial: 28cc3a25bfba44ac449a9b586b4339a
+    # Hash: 3b1efd3a66ea28b16697394703a72ca340a05bd5
+    if (! (Test-Path -Path Cert:\LocalMachine\Root\3b1efd3a66ea28b16697394703a72ca340a05bd5) ) {
+        Write-Host "Installing Certificate Sign Root Certificate: " -NoNewLine
+        Start-Process -FilePath "certutil" `
+                      -ArgumentList "-addstore", `
+                                    "Root", `
+                                    "$($env:TEMP)\build_tools\certificates\manifestCounterSignRootCertificate.cer" `
+                      -Wait -WindowStyle Hidden
+        if ( Test-Path -Path Cert:\LocalMachine\Root\3b1efd3a66ea28b16697394703a72ca340a05bd5 ) {
+            Write-Host "Success" -ForegroundColor Green
+        } else {
+            Write-Host "Failed" -ForegroundColor Yellow
+        }
+    } 
+                  
+    # Serial: 3f8bc8b5fc9fb29643b569d66c42e144
+    # Hash: 8f43288ad272f3103b6fb1428485ea3014c0bcfe
+    if (! (Test-Path -Path Cert:\LocalMachine\Root\8f43288ad272f3103b6fb1428485ea3014c0bcfe) ) {
+        Write-Host "Installing Certificate Root Certificate: " -NoNewLine
+        Start-Process -FilePath "certutil" `
+                  -ArgumentList "-addstore", `
+                                "Root", `
+                                "$($env:TEMP)\build_tools\certificates\manifestRootCertificate.cer" `
+                  -Wait -WindowStyle Hidden
+        if ( Test-Path -Path Cert:\LocalMachine\Root\8f43288ad272f3103b6fb1428485ea3014c0bcfe ) {
+            Write-Host "Success" -ForegroundColor Green
+        } else {
+            Write-Host "Failed" -ForegroundColor Yellow
+        }
+    } 
+
     Write-Host "Installing Visual Studio 2017 build tools: " -NoNewline
-    . $env:TEMP\build_tools\vs_buildtools.exe --noweb `
-        --add Microsoft.VisualStudio.Workload.MSBuildTools `
-        --add Microsoft.VisualStudio.Workload.VCTools `
-        --add Microsoft.VisualStudio.Component.Windows81SDK `
-        --add Microsoft.VisualStudio.Component.Windows10SDK.17763 `
-        --add Microsoft.VisualStudio.Component.VC.140 `
-        --add Microsoft.Component.VC.Runtime.UCRTSDK `
-        --includeRecommended --quiet --wait | Out-Null
+    Start-Process -FilePath "$env:TEMP\build_tools\vs_setup.exe" `
+                  -ArgumentList "--wait", "--noweb", "--quiet" `
+                  -Wait
     if ( Test-Path -Path $VS_CL_BIN ) {
         Write-Host "Success" -ForegroundColor Green
     } else {
@@ -241,8 +290,8 @@ if ( Test-Path -Path "$PYTHON_DIR" ) {
 Write-Host "Cloning Python ($PY_DOT_VERSION): " -NoNewline
 $args = "clone", "--depth", "1", "--branch", "v$PY_DOT_VERSION", "$PY_REPO_URL", "$PY_SRC_DIR"
 Start-Process -FilePath git `
-    -ArgumentList $args `
-    -Wait -WindowStyle Hidden
+              -ArgumentList $args `
+              -Wait -WindowStyle Hidden
 if ( Test-Path -Path "$PY_SRC_DIR\Python") {
     Write-Host "Success" -ForegroundColor Green
 } else {
@@ -256,7 +305,7 @@ Write-Host "Building Python (long-running): " -NoNewLine
 # need to disable Node Reuse so it closes the running MSBuild.exe process.
 [System.Environment]::SetEnvironmentVariable("MSBUILDDISABLENODEREUSE", "1")
 Start-Process -FilePath "$PY_SRC_DIR\PCbuild\build.bat" `
-    -ArgumentList "-p", "x64", "--no-tkinter" `
+    -ArgumentList "-p", "$Architecture", "--no-tkinter" `
     -WindowStyle Hidden
 # Sometimes the process doesn't return properly so the script can continue
 # So, we'll run it asynchronously and check for the last file it builds
@@ -493,6 +542,7 @@ if ( Test-Path -Path "$profile.salt_bak" ) {
 # Finished
 #-------------------------------------------------------------------------------
 Write-Host $("-" * 80)
-Write-Host "Build Python Environment from Source Completed"
+Write-Host "Build Python $Architecture from Source Completed" `
+    -ForegroundColor Cyan
 Write-Host "Environment Location: $PYTHON_DIR"
 Write-Host $("=" * 80)

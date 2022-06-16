@@ -17,29 +17,30 @@ param(
     # The version of Salt to be built. If this is not passed, the script will
     # attempt to get it from the git describe command on the Salt source
     # repo
-    [String] $Version
+    [String] $Version,
+
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("x86", "x64")]
+    [Alias("a")]
+    # The System Architecture to build. "x86" will build a 32-bit installer.
+    # "x64" will build a 64-bit installer. Default is: x64
+    $Architecture = "x64"
 )
 
 # Script Preferences
 $ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
 
-Write-Host $("=" * 80)
-Write-Host "Build NullSoft Installer for Salt"
-Write-Host $("-" * 80)
-
 #-------------------------------------------------------------------------------
 # Variables
 #-------------------------------------------------------------------------------
 # Script Variables
-$OS_ARCH        = (Get-CimInstance Win32_OperatingSystem).OSArchitecture
-if ( $OS_ARCH -eq "64-bit" ) {
+$NSIS_DIR       = "$( ${env:ProgramFiles(x86)} )\NSIS"
+if ( $Architecture -eq "x64" ) {
     $ARCH           = "amd64"
-    $NSIS_DIR       = "$( ${env:ProgramFiles(x86)} )\NSIS"
     $SALT_DEP_URL   = "https://repo.saltproject.io/windows/dependencies/64"
 } else {
     $ARCH           = "x86"
-    $NSIS_DIR       = "${env:ProgramFiles}\NSIS"
     $SALT_DEP_URL   = "https://repo.saltproject.io/windows/dependencies/32"
 }
 
@@ -53,6 +54,7 @@ $SCRIPTS_DIR    = "$PYTHON_DIR\Scripts"
 # Build Variables
 $SCRIPT_DIR     = (Get-ChildItem "$($myInvocation.MyCommand.Definition)").DirectoryName
 $PROJECT_DIR    = $(git rev-parse --show-toplevel)
+$SALT_REPO_URL  = "https://github.com/saltstack/salt"
 $SALT_SRC_DIR   = "$( (Get-Item $PROJECT_DIR).Parent.FullName )\salt"
 $BUILD_DIR      = "$SCRIPT_DIR\buildenv"
 $BUILD_DIR_BIN  = "$BUILD_DIR\bin"
@@ -60,6 +62,35 @@ $BUILD_DIR_SALT = "$BUILD_DIR_BIN\Lib\site-packages\salt"
 $BUILD_DIR_CONF = "$BUILD_DIR\configs"
 $INSTALLER_DIR  = "$SCRIPT_DIR\installer"
 $PREREQ_DIR     = "$SCRIPT_DIR\prereqs"
+
+#-------------------------------------------------------------------------------
+# Verify Salt and Version
+#-------------------------------------------------------------------------------
+
+if ( [String]::IsNullOrEmpty($Version) ) {
+    if ( ! (Test-Path -Path $SALT_SRC_DIR) ) {
+        Write-Host "Missing Salt Source Directory: $SALT_SRC_DIR"
+        exit 1
+    }
+    Push-Location $SALT_SRC_DIR
+    $Version = $( git describe )
+    $Version = $Version.Trim("v")
+    Pop-Location
+    if ( [String]::IsNullOrEmpty($Version) ) {
+        Write-Host "Failed to get version from $SALT_SRC_DIR"
+        exit 1
+    }
+}
+
+#-------------------------------------------------------------------------------
+# Start the Script
+#-------------------------------------------------------------------------------
+
+Write-Host $("=" * 80)
+Write-Host "Build NullSoft Installer for Salt" -ForegroundColor Cyan
+Write-Host "- Architecture: $Architecture"
+Write-Host "- Salt Version: $Version"
+Write-Host $("-" * 80)
 
 #-------------------------------------------------------------------------------
 # Verify Environment
@@ -94,24 +125,6 @@ if ( Test-Path -Path "$NSIS_DIR\makensis.exe" ) {
 } else {
     Write-Host "Failed" -ForegroundColor Red
     exit 1
-}
-
-#-------------------------------------------------------------------------------
-# Verify Variables
-#-------------------------------------------------------------------------------
-
-if ( [String]::IsNullOrEmpty($Version) ) {
-    Write-Host "Getting Salt version from Source: " -NoNewline
-    Push-Location $SALT_SRC_DIR
-    $Version = $( git describe )
-    $Version = $Version.Trim("v")
-    Pop-Location
-    if ( ! ([String]::IsNullOrEmpty($Version)) ) {
-        Write-Host "$Version" -ForegroundColor Green
-    } else {
-        Write-Host "Failed" -ForegroundColor Red
-        exit 1
-    }
 }
 
 #-------------------------------------------------------------------------------
@@ -183,29 +196,8 @@ if ( Test-Path -Path "$BUILD_DIR_BIN\ssm.exe" ) {
 
 New-Item -Path $PREREQ_DIR -ItemType Directory | Out-Null
 
-# 32-bit binaries are only needed for x86 installer
-if ( $OS_ARCH -eq "32-bit" ) {
-    Write-Host "Copying VCRedist 2013 x86 to prereqs: " -NoNewline
-    Invoke-WebRequest -Uri "$SALT_DEP_URL/vcredist_x86_2013.exe" -OutFile "$PREREQ_DIR\vcredist_x86_2013.exe"
-    if ( Test-Path -Path "$PREREQ_DIR\vcredist_x86_2013.exe" ) {
-        Write-Host "Success" -ForegroundColor Green
-    } else {
-        Write-Host "Failed" -ForegroundColor Red
-        exit 1
-    }
-
-    Write-Host "Copying Universal C Runtimes x86 to prereqs: " -NoNewline
-    Invoke-WebRequest -Uri "$SALT_DEP_URL/ucrt_x86.zip" -OutFile "$PREREQ_DIR\ucrt_x86.zip"
-    if ( Test-Path -Path "$PREREQ_DIR\ucrt_x86.zip" ) {
-        Write-Host "Success" -ForegroundColor Green
-    } else {
-        Write-Host "Failed" -ForegroundColor Red
-        exit 1
-    }
-}
-
-# 64-bit binaries are only needed for x86 installer
-if ( $OS_ARCH -eq "64-bit" ) {
+if ( $Architecture -eq "x64" ) {
+    # 64-bit Prereqs
     Write-Host "Copying VCRedist 2013 x64 to prereqs: " -NoNewline
     Invoke-WebRequest -Uri "$SALT_DEP_URL/vcredist_x64_2013.exe" -OutFile "$PREREQ_DIR\vcredist_x64_2013.exe"
     if ( Test-Path -Path "$PREREQ_DIR\vcredist_x64_2013.exe" ) {
@@ -218,6 +210,25 @@ if ( $OS_ARCH -eq "64-bit" ) {
     Write-Host "Copying Universal C Runtimes x64 to prereqs: " -NoNewline
     Invoke-WebRequest -Uri "$SALT_DEP_URL/ucrt_x64.zip" -OutFile "$PREREQ_DIR\ucrt_x64.zip"
     if ( Test-Path -Path "$PREREQ_DIR\ucrt_x64.zip" ) {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
+    }
+} else {
+    # 32-bit Prereqs
+    Write-Host "Copying VCRedist 2013 x86 to prereqs: " -NoNewline
+    Invoke-WebRequest -Uri "$SALT_DEP_URL/vcredist_x86_2013.exe" -OutFile "$PREREQ_DIR\vcredist_x86_2013.exe"
+    if ( Test-Path -Path "$PREREQ_DIR\vcredist_x86_2013.exe" ) {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "Copying Universal C Runtimes x86 to prereqs: " -NoNewline
+    Invoke-WebRequest -Uri "$SALT_DEP_URL/ucrt_x86.zip" -OutFile "$PREREQ_DIR\ucrt_x86.zip"
+    if ( Test-Path -Path "$PREREQ_DIR\ucrt_x86.zip" ) {
         Write-Host "Success" -ForegroundColor Green
     } else {
         Write-Host "Failed" -ForegroundColor Red
@@ -475,7 +486,8 @@ Write-Host "Success" -ForegroundColor Green
 Write-Host "Building the Installer: " -NoNewline
 $installer_name = "Salt-Minion-$Version-Py$($PY_VERSION.Split(".")[0])-$ARCH-Setup.exe"
 Start-Process -FilePath $NSIS_DIR\makensis.exe `
-              -ArgumentList "/DSaltVersion=$Version", 
+              -ArgumentList "/DSaltVersion=$Version", `
+                            "/DPythonArchitecture=$Architecture", `
                             "$INSTALLER_DIR\Salt-Minion-Setup.nsi" `
               -Wait -WindowStyle Hidden
 if ( Test-Path -Path "$INSTALLER_DIR\$installer_name" ) {
@@ -515,8 +527,8 @@ if ( Test-Path -Path "$PROJECT_DIR\build\$installer_name" ) {
 # Finished
 #-------------------------------------------------------------------------------
 Write-Host $("-" * 80)
-Write-Host "Build NullSoft Installer for Salt Completed"
+Write-Host "Build NullSoft Installer for Salt Completed" `
+    -ForegroundColor Cyan
 Write-Host $("=" * 80)
-Write-Host "Installer can be found in the following directory:"
+Write-Host "Installer can be found at the following location:"
 Write-Host "$PROJECT_DIR\build\$installer_name"
-Start $PROJECT_DIR\build

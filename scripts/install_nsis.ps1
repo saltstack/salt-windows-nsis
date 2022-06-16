@@ -49,23 +49,23 @@ If (!(Get-IsAdministrator)) {
     }
 }
 
-Write-Host $("=" * 80)
-Write-Host "Install NullSoft Installer Software and Plugins"
-Write-Host $("-" * 80)
+#-------------------------------------------------------------------------------
+# Script Variables
+#-------------------------------------------------------------------------------
 
-Write-Host "Setting Variables: " -NoNewLine
-$OS_ARCH      = (Get-CimInstance Win32_OperatingSystem).OSArchitecture
-if ( $OS_ARCH -eq "64-bit" ) {
-    $PF_DIR = ${env:ProgramFiles(x86)}
-} else {
-    $PF_DIR = $env:ProgramFiles
-}
-$NSIS_DIR     = "$PF_DIR\NSIS"
+$NSIS_DIR     = "${env:ProgramFiles(x86)}\NSIS"
 $NSIS_PLUG_A  = "$NSIS_DIR\Plugins\x86-ansi"
 $NSIS_PLUG_U  = "$NSIS_DIR\Plugins\x86-unicode"
 $NSIS_LIB_DIR = "$NSIS_DIR\Include"
 $DEPS_URL = "https://repo.saltproject.io/windows/dependencies"
-Write-Host "Success" -ForegroundColor Green
+
+#-------------------------------------------------------------------------------
+# Start the Script
+#-------------------------------------------------------------------------------
+
+Write-Host $("=" * 80)
+Write-Host "Install NullSoft Installer Software and Plugins" -ForegroundColor Cyan
+Write-Host $("-" * 80)
 
 #-------------------------------------------------------------------------------
 # NSIS
@@ -363,5 +363,6 @@ if ( Test-Path -Path $check_file ) {
 }
 
 Write-Host $("-" * 80)
-Write-Host "Install NullSoft Installer Software and Plugins Completed"
+Write-Host "Install NullSoft Installer Software and Plugins Completed" `
+    -ForegroundColor Cyan
 Write-Host $("=" * 80)
