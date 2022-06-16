@@ -139,8 +139,6 @@ Write-Host "Success" -ForegroundColor Green
 # Script Variables
 #-------------------------------------------------------------------------------
 Write-Host "Setting Variables: " -NoNewLine
-# System Properties
-$OS_ARCH        = (Get-CimInstance Win32_OperatingSystem).OSArchitecture
 
 # Script Variables
 $PROJ_DIR     = $(git rev-parse --show-toplevel)
@@ -157,11 +155,9 @@ $SCRIPTS_DIR    = "$PYTHON_DIR\Scripts"
 
 # Dependency Variables
 $VS_BLD_TOOLS   = "https://aka.ms/vs/15/release/vs_buildtools.exe"
-if ( $OS_ARCH -eq "64-bit" ) {
-    $VS_CL_BIN      = "${env:ProgramFiles(x86)}\Microsoft Visual Studio 14.0\VC\bin\cl.exe"
-} else {
-    $VS_CL_BIN      = "${env:ProgramFiles}\Microsoft Visual Studio 14.0\VC\bin\cl.exe"
-}
+$VS_CL_BIN      = "${env:ProgramFiles(x86)}\Microsoft Visual Studio 14.0\VC\bin\cl.exe"
+$MSBUILD_BIN    = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin\msbuild.exe"
+$WIN10_SDK_RC   = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.17763.0\x64\rc.exe"
 
 if ( $Architecture -eq "x64" ) {
     $PY_BLD_DIR     = "$PY_SRC_DIR\PCbuild\amd64"
@@ -176,11 +172,28 @@ Write-Host "Success" -ForegroundColor Green
 #-------------------------------------------------------------------------------
 # Visual Studio
 #-------------------------------------------------------------------------------
-Write-Host "Looking for Visual Studio 2017: " -NoNewline
-if ( Test-Path -Path $VS_CL_BIN ) {
-    Write-Host "Success" -ForegroundColor Green
-} else {
+
+$install_build_tools = $false
+Write-Host "Looking for VC Build Tools: " -NoNewline
+@($VS_CL_BIN, $MSBUILD_BIN, $WIN_SDK_RC) {
+    if ( ! (Test-Path -Path $_) ) {
+        $install_build_tools = $true
+    }
+}
+
+if ( $install_build_tools ) {
     Write-Host "Missing" -ForegroundColor Yellow
+
+    Write-Host "Checking available disk space: " -NoNewLine
+    $available = (Get-PSDrive $env:SystemDrive.Trim(":")).Free
+    if ( $available -gt (1024 * 1024 * 1024 * 9.1) ) {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red
+        Write-Host "Not enough disk space"
+        exit 1
+    }
+
     Write-Host "Downloading Visual Studio 2017 build tools: " -NoNewline
     Invoke-WebRequest -Uri "$VS_BLD_TOOLS" -OutFile "$env:TEMP\vs_buildtools.exe"
     if ( Test-Path -Path "$env:TEMP\vs_buildtools.exe" ) {
@@ -193,8 +206,8 @@ if ( Test-Path -Path $VS_CL_BIN ) {
     Write-Host "Creating Layout for Visual Studio 2017 build tools: " -NoNewline
     if ( ! (Test-Path -Path "$($env:TEMP)\build_tools") ) {
         New-Item -Path "$($env:TEMP)\build_tools" -ItemType Directory | Out-Null
-    }    
-    
+    }
+
     Start-Process -FilePath "$env:TEMP\vs_buildtools.exe" `
                   -ArgumentList "--layout `"$env:TEMP\build_tools`"", `
                                 "--add Microsoft.VisualStudio.Workload.MSBuildTools", `
@@ -229,8 +242,8 @@ if ( Test-Path -Path $VS_CL_BIN ) {
         } else {
             Write-Host "Failed" -ForegroundColor Yellow
         }
-    } 
-                  
+    }
+
     # Serial: 3f8bc8b5fc9fb29643b569d66c42e144
     # Hash: 8f43288ad272f3103b6fb1428485ea3014c0bcfe
     if (! (Test-Path -Path Cert:\LocalMachine\Root\8f43288ad272f3103b6fb1428485ea3014c0bcfe) ) {
@@ -245,18 +258,21 @@ if ( Test-Path -Path $VS_CL_BIN ) {
         } else {
             Write-Host "Failed" -ForegroundColor Yellow
         }
-    } 
+    }
 
     Write-Host "Installing Visual Studio 2017 build tools: " -NoNewline
     Start-Process -FilePath "$env:TEMP\build_tools\vs_setup.exe" `
                   -ArgumentList "--wait", "--noweb", "--quiet" `
                   -Wait
-    if ( Test-Path -Path $VS_CL_BIN ) {
-        Write-Host "Success" -ForegroundColor Green
-    } else {
-        Write-Host "Failed" -ForegroundColor Red
-        exit 1
+    @($VS_CL_BIN, $MSBUILD_BIN, $WIN_SDK_RC) {
+        if ( ! (Test-Path -Path $_) ) {
+            Write-Host "Failed" -ForegroundColor Red
+            exit 1
+        }
     }
+    Write-Host "Success" -ForegroundColor Green
+} else {
+    Write-Host "Success" -ForegroundColor Green
 }
 
 #-------------------------------------------------------------------------------
