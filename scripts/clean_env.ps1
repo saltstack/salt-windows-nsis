@@ -75,22 +75,20 @@ $packages | ForEach-Object {
 # Remove all Python 3 Installations
 #-------------------------------------------------------------------------------
 $packages = Get-Package | where {($_.Name -match "^Python 3.*$") -and ($_.ProviderName -eq "Programs") }
-if ( $packages -gt 0 ) {
-    $packages | ForEach-Object {
-        $pkg_name = $_.Name
-        Write-Host "Uninstalling $($pkg_name): " -NoNewline
-        $null, $uninstaller, $arguments = $_.Metadata["QuietUninstallString"] -Split('"')
-        $arguments = $arguments.Trim().Split()
-        Start-Process -FilePath $uninstaller `
-                      -ArgumentList $arguments `
-                      -Wait
-        $test = Get-Package | where { $_.Name -eq $pkg_name }
-        if ( $test.Count -eq 0 ) {
-            Write-Host "Success" -ForegroundColor Green
-        } else {
-            Write-Host "Failed" -ForegroundColor Red
-            exit 1
-        }
+$packages | ForEach-Object {
+    $pkg_name = $_.Name
+    Write-Host "Uninstalling $($pkg_name): " -NoNewline
+    $null, $uninstaller, $arguments = $_.Metadata["QuietUninstallString"] -Split('"')
+    $arguments = $arguments.Trim().Split()
+    Start-Process -FilePath $uninstaller `
+                    -ArgumentList $arguments `
+                    -Wait
+    $test = Get-Package | where { $_.Name -eq $pkg_name }
+    if ( $test.Count -eq 0 ) {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
     }
 }
 
