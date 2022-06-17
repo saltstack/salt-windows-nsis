@@ -154,6 +154,15 @@ if ( ! $? ) {
 }
 
 #-------------------------------------------------------------------------------
+# Install Visual Studio Build Tools
+#-------------------------------------------------------------------------------
+powershell -file "$SCRIPT_DIR\install_vs_buildtools.ps1"
+if ( ! $? ) {
+    Write-Host "Failed to install Visual Studio Build Tools"
+    exit 1
+}
+
+#-------------------------------------------------------------------------------
 # Build Python
 #-------------------------------------------------------------------------------
 powershell -file "$SCRIPT_DIR\build_python.ps1" `
