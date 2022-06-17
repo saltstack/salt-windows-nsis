@@ -354,6 +354,7 @@ Move-Item -Path "$PY_BLD_DIR\python.exe" -Destination "$PYTHON_DIR" | Out-Null
 Move-Item -Path "$PY_BLD_DIR\python3.dll" -Destination "$PYTHON_DIR" | Out-Null
 Move-Item -Path "$PY_BLD_DIR\python38.dll" -Destination "$PYTHON_DIR" | Out-Null
 Move-Item -Path "$PY_BLD_DIR\vcruntime140.dll" -Destination "$PYTHON_DIR" | Out-Null
+Move-Item -Path "$PY_BLD_DIR\venvlauncher.exe" -Destination "$PYTHON_DIR" | Out-Null
 if ( ! ( Test-Path -Path "$PYTHON_DIR\python.exe") ) {
     Write-Host "Failed" -ForegroundColor Red
     exit 1
