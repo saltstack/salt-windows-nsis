@@ -139,20 +139,58 @@ $paths | ForEach-Object {
 $system_paths = [Environment]::GetEnvironmentVariable("PATH", "Machine").Split(";")
 $new_path = [System.Collections.ArrayList]::New()
 
-$system_paths | ForEach-Object {
-    $sys_path = $_.Trim("\")
-    $found = $false
-    $paths | ForEach-Object {
-        if ( $sys_path -in "$_", "$_\Scripts" ) {
-            $found = $true
-        }
-    }
-    if ( ! $found ) {
-        $new_path.Add($sys_path) | Out-Null
+$found_in_path = $false
+$paths | ForEach-Object {
+    if ( $_ -in $system_paths ) {
+        $found_in_path = $true
     }
 }
 
-[Environment]::SetEnvironmentVariable("PATH", $new_path -join ";", [EnvironmentVariableTarget]::Machine)
+if ( $found_in_path ) {
+    Write-Host "Removing Python from PATH: " -NoNewline
+    $system_paths | ForEach-Object {
+        $found = $false
+        if ($_ -match "^[A-Z]:\\Python\d{2,3}.*") {
+            $found = $true
+        }
+        if (!$found) {
+            $new_path.Add($_) | Out-Null
+        }
+    }
+
+    if ( ! [String]::IsNullOrEmpty($new_path) ) {
+        [Environment]::SetEnvironmentVariable("PATH", $new_path -join ";", [EnvironmentVariableTarget]::Machine)
+        $env:PATH = [Environment]::GetEnvironmentVariable("PATH", "Machine")
+    }
+
+    $found_in_path = $false
+    $paths | ForEach-Object {
+        if ( $_ -in $env:PATH ) {
+            $found_in_path = $true
+        }
+    }
+    if ( ! $found_in_path ) {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# Remove Python Launcher Registry Keys
+#-------------------------------------------------------------------------------
+if ( Test-Path -Path HKLM:\SOFTWARE\Python ) {
+    Write-Host "Removing Python Launcher Registry Keys: " -NoNewline
+    Remove-Item -Path HKLM:\SOFTWARE\Python -Recurse -Force
+    if ( ! (Test-Path -Path HKLM:\SOFTWARE\Python) ) {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
+    }
+}
 
 #-------------------------------------------------------------------------------
 # Done
