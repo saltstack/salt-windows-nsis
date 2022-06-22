@@ -89,11 +89,21 @@ def clean_env(inst_dir=INST_DIR):
             while "Un_A.exe" in (p.name() for p in psutil.process_iter()):
                 # Sometimes the Uninstall binary hangs... we'll kill it after 10 seconds
                 if (time.time() - start_time) > 10:
-                    start_time = time.time()
                     for proc in psutil.process_iter():
                         if proc.name() == "Un_A.exe":
                             proc.kill()
                 time.sleep(.1)
+
+    # This is needed to avoid a race condition where the installer isn't closed
+    start_time = time.time()
+    while os.path.basename(INST_BIN) in (p.name() for p in psutil.process_iter()):
+        if (time.time() - start_time) > 10:
+            # If it's not dead after 10 seconds, kill it
+            for proc in psutil.process_iter():
+                if proc.name() == os.path.basename(INST_BIN):
+                    proc.kill()
+                time.sleep(.1)
+
     # Remove root_dir
     if os.path.exists(DATA_DIR):
         shutil.rmtree(DATA_DIR)
@@ -167,4 +177,3 @@ def run_command(cmd):
 # These are at the bottom because they depend on some of the functions
 REPO_DIR = run_command(["git", "rev-parse", "--show-toplevel"])
 INST_BIN = f"{REPO_DIR}\\test-setup.exe"
-

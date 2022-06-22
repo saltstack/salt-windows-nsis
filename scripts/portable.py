@@ -50,10 +50,12 @@ def main(argv):
 
     search = search.encode("utf-8")
     replace = replace.encode("utf-8")
-    f = open(target, "rb").read()
-    f = f.replace(search, replace)
-    f = f.replace(search.lower(), replace)
-    open(target, "wb").write(f)
+    with open(target, "rb") as f:
+        content = f.read()
+    content = content.replace(search, replace)
+    content = content.replace(search.lower(), replace)
+    with open(target, "wb") as f:
+        f.write(content)
 
 
 if __name__ == "__main__":

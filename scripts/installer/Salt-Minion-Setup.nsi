@@ -36,9 +36,13 @@ ${StrStrAdv}
     !define PRODUCT_VERSION "Undefined Version"
 !endif
 
-!if "$%PROCESSOR_ARCHITECTURE%" == "AMD64"
-    !define CPUARCH "AMD64"
-!else if "$%PROCESSOR_ARCHITEW6432%" == "AMD64"
+!ifdef PythonArchitecture
+    !define PYTHON_ARCHITECTURE "${PythonArchitecture}"
+!else
+    !define PYTHON_ARCHITECTURE "x64"
+!endif
+
+!if "${PYTHON_ARCHITECTURE}" == "x64"
     !define CPUARCH "AMD64"
 !else
     !define CPUARCH "x86"
@@ -560,9 +564,7 @@ Section -install_ucrt
     detailPrint "UCRT (KB2999226) not found"
 
     # Use RunningX64 here to get the Architecture for the system running the
-    # installer. CPUARCH is defined when the installer is built and is based on
-    # the machine that built the installer, not the target system as we need
-    # here.
+    # installer.
     ${If} ${RunningX64}
         StrCpy $UcrtFileName "ucrt_x64.zip"
     ${Else}
@@ -608,14 +610,11 @@ Section -install_vcredist_2013
 
     # Only install 64bit VCRedist on 64bit machines
     # Use RunningX64 here to get the Architecture for the system running the
-    # installer. CPUARCH is defined when the installer is built and is based on
-    # the machine that built the installer, not the target system as we need
-    # here.
+    # installer.
     ${If} ${RunningX64}
         StrCpy $VcRedistName ${VCREDIST_X64_NAME}
         StrCpy $VcRedistGuid ${VCREDIST_X64_GUID}
     ${Else}
-        # Install 32bit VCRedist on all machines
         StrCpy $VcRedistName ${VCREDIST_X86_NAME}
         StrCpy $VcRedistGuid ${VCREDIST_X86_GUID}
     ${EndIf}
@@ -744,7 +743,7 @@ Function .onInit
     # Make sure we do not allow 32-bit Salt on 64-bit systems
     # This is the system the installer is running on
     ${If} ${RunningX64}
-        # This is the architecture the installer was built on
+        # This is the Python architecture the installer was built with
         ${If} ${CPUARCH} == "x86"
             MessageBox MB_OK|MB_ICONEXCLAMATION  \
                 "Detected 64-bit Operating system.$\n$\n\
@@ -753,7 +752,7 @@ Function .onInit
             Abort
         ${EndIf}
     ${Else}
-        # This is the architecture the installer was built on
+        # This is the Python architecture the installer was built with
         ${If} ${CPUARCH} == "AMD64"
             MessageBox MB_OK|MB_ICONEXCLAMATION  \
                 "Detected 32-bit Operating system.$\n$\n\
@@ -797,15 +796,12 @@ Function .onInit
     checkExistingInstallation:
         # Check for existing installation
 
-        # The NSIS installer is a 32bit application and will use the WOW6432Node in
-        # the registry by default. We need to look in the 64 bit location on 64 bit
-        # systems
+        # The NSIS installer is a 32bit application and will use the WOW6432Node
+        # in the registry by default. We need to look in the 64 bit location on
+        # 64 bit systems
         ${If} ${RunningX64}
-            # This would only apply if we are installing the 64 bit version of Salt
-            ${If} ${CPUARCH} == "AMD64"
-                # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
-                SetRegView 64  # View the 64 bit portion of the registry
-            ${EndIf}
+            # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
+            SetRegView 64  # View the 64 bit portion of the registry
         ${EndIf}
 
         ReadRegStr $R0 HKLM \
@@ -918,11 +914,8 @@ Section -Post
     # the registry by default. We need to look in the 64 bit location on 64 bit
     # systems
     ${If} ${RunningX64}
-        # This would only apply if we are installing the 64 bit version of Salt
-        ${If} ${CPUARCH} == "AMD64"
-            # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
-            SetRegView 64  # View 64 bit portion of the registry
-        ${EndIf}
+        # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
+        SetRegView 64  # View 64 bit portion of the registry
     ${EndIf}
 
     # Write Uninstall Registry Entries
@@ -963,14 +956,7 @@ Section -Post
     # Program Files
     StrCpy $RegInstDir $INSTDIR
 
-    # Check Program Files (x86) first
-    # We want to use the environment variables instead of the hardcoded path
-    # TODO: Do we need this now that we're not allowing 32bit on 64bit?
-    ${StrContains} $0 "Program Files (x86)" $INSTDIR
-    StrCmp $0 "" +2  # If it's empty, skip the next line
-        StrCpy $RegInstDir "%ProgramFiles(x86)%\Salt Project\Salt"
-
-    # Check normal Program Files next
+    # Program Files
     # We want to use the environment variables instead of the hardcoded path
     ${StrContains} $0 "Program Files" $INSTDIR
     StrCmp $0 "" +2  # If it's empty, skip the next line
@@ -1080,6 +1066,7 @@ Function ${un}uninstallSalt
       StrCpy $INSTDIR "C:\salt"
     ${EndIf}
     # $ProgramFiles is different depending on the CPU Architecture
+    # https://nsis.sourceforge.io/Reference/$PROGRAMFILES
     # x86 : C:\Program Files
     # x64 : C:\Program Files (x86)
     ${If} $INSTDIR == "$ProgramFiles\Salt Project\Salt\bin\Scripts"
@@ -1133,26 +1120,23 @@ Function ${un}uninstallSalt
     # the registry by default. We need to look in the 64 bit location on 64 bit
     # systems
     ${If} ${RunningX64}
-        # This would only apply if we are installing the 64 bit version of Salt
-        ${If} ${CPUARCH} == "AMD64"
-            # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
-            SetRegView 64  # View the 64 bit portion of the registry
+        # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
+        SetRegView 64  # View the 64 bit portion of the registry
 
-            # Get Root Directory from the Registry (64 bit)
-            ReadRegStr $RootDir HKLM "SOFTWARE\Salt Project\Salt" "root_dir"
+        # Get Root Directory from the Registry (64 bit)
+        ReadRegStr $RootDir HKLM "SOFTWARE\Salt Project\Salt" "root_dir"
 
-            # Remove Registry entries
-            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
+        # Remove Registry entries
+        DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
 
-            # Remove Command Line Registry entries
-            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_CALL_REGKEY}"
-            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_CP_REGKEY}"
-            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_KEY_REGKEY}"
-            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_MASTER_REGKEY}"
-            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_MINION_REGKEY}"
-            DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_RUN_REGKEY}"
-            DeleteRegKey HKLM "SOFTWARE\Salt Project"
-        ${EndIf}
+        # Remove Command Line Registry entries
+        DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_CALL_REGKEY}"
+        DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_CP_REGKEY}"
+        DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_KEY_REGKEY}"
+        DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_MASTER_REGKEY}"
+        DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_MINION_REGKEY}"
+        DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_RUN_REGKEY}"
+        DeleteRegKey HKLM "SOFTWARE\Salt Project"
     ${EndIf}
 
     # Remove everything in the 32 bit registry
@@ -1510,18 +1494,10 @@ Function getExistingInstallation
 
     # Get ProgramFiles
     # Use RunningX64 here to get the Architecture for the system running the
-    # installer. CPUARCH is defined when the installer is built and is based on
-    # the machine that built the installer, not the target system
+    # installer.
     # There are 3 scenarios here:
-    # TODO: May not need the 32 bit on 64 bit scenario anymore
     ${If} ${RunningX64}
-        ${If} ${CPUARCH} == "AMD64"
-            # 64 bit Salt on 64 bit system (C:\Program Files)
-            StrCpy $INSTDIR "$ProgramFiles64\Salt Project\Salt"
-        ${Else}
-            # 32 bit Salt on 64 bit system (C:\Program Files (x86))
-            StrCpy $INSTDIR "$ProgramFiles32\Salt Project\Salt"
-        ${EndIf}
+        StrCpy $INSTDIR "$ProgramFiles64\Salt Project\Salt"
     ${Else}
         # 32 bit Salt on 32 bit system (C:\Program Files)
         StrCpy $INSTDIR "$ProgramFiles\Salt Project\Salt"
@@ -1538,11 +1514,8 @@ Function getExistingInstallation
     # the registry by default. We need to look in the 64 bit location on 64 bit
     # systems
     ${If} ${RunningX64}
-        # This would only apply if we are installing the 64 bit version of Salt
-        ${If} ${CPUARCH} == "AMD64"
-            # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
-            SetRegView 64  # View the 64 bit portion of the registry
-        ${EndIf}
+        # https://nsis.sourceforge.io/Docs/Chapter4.html#setregview
+        SetRegView 64  # View the 64 bit portion of the registry
     ${EndIf}
 
     # Check for existing new method installation from registry
@@ -1567,18 +1540,18 @@ Function getExistingInstallation
     # Check for existing old method installation
     # Look for `python.exe` in C:\salt\bin
     checkOldInstallation:
-    IfFileExists "C:\salt\bin\python.exe" 0 newInstallation
-    StrCpy $ExistingInstallation 1
-    StrCpy $INSTDIR "C:\salt"
-    StrCpy $RootDir "C:\salt"
-    Goto finished
+        IfFileExists "C:\salt\bin\python.exe" 0 newInstallation
+        StrCpy $ExistingInstallation 1
+        StrCpy $INSTDIR "C:\salt"
+        StrCpy $RootDir "C:\salt"
+        Goto finished
 
     # This is a new installation
     # Check if custom location was passed via command line
     newInstallation:
-    ${IfNot} $CustomLocation == ""
-        StrCpy $INSTDIR $CustomLocation
-    ${EndIf}
+        ${IfNot} $CustomLocation == ""
+            StrCpy $INSTDIR $CustomLocation
+        ${EndIf}
 
     finished:
         SetRegView 32  # View the 32 bit portion of the registry
