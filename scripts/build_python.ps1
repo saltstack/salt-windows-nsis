@@ -230,28 +230,22 @@ if ( Test-Path -Path "$PYTHON_DIR" ) {
 }
 
 Write-Host "Moving Python binaries: " -NoNewline
-Move-Item -Path "$PY_BLD_DIR\py.exe" -Destination "$PYTHON_DIR" | Out-Null
-Move-Item -Path "$PY_BLD_DIR\python.exe" -Destination "$PYTHON_DIR" | Out-Null
-Move-Item -Path "$PY_BLD_DIR\python3.dll" -Destination "$PYTHON_DIR" | Out-Null
-Move-Item -Path "$PY_BLD_DIR\python38.dll" -Destination "$PYTHON_DIR" | Out-Null
-Move-Item -Path "$PY_BLD_DIR\vcruntime140.dll" -Destination "$PYTHON_DIR" | Out-Null
-Move-Item -Path "$PY_BLD_DIR\venvlauncher.exe" -Destination "$PYTHON_DIR" | Out-Null
-if ( ! ( Test-Path -Path "$PYTHON_DIR\python.exe") ) {
-    Write-Host "Failed" -ForegroundColor Red
-    exit 1
+$binaries = @(
+    "py.exe",
+    "python.exe",
+    "python3.dll",
+    "python38.dll",
+    "vcruntime140.dll",
+    "venvlauncher.exe"
+)
+$binaries | ForEach-Object {
+    Move-Item -Path "$PY_BLD_DIR\$_" -Destination "$PYTHON_DIR" | Out-Null
+    if ( ! ( Test-Path -Path "$PYTHON_DIR\$_") ) {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
+    }
 }
-if ( ! ( Test-Path -Path "$PYTHON_DIR\python3.dll") ) {
-    Write-Host "Failed" -ForegroundColor Red
-}
-if ( ! ( Test-Path -Path "$PYTHON_DIR\python38.dll") ) {
-    Write-Host "Failed" -ForegroundColor Red
-}
-if ( Test-Path -Path "$PYTHON_DIR\vcruntime140.dll" ) {
-    Write-Host "Success" -ForegroundColor Green
-} else {
-    Write-Host "Failed" -ForegroundColor Red
-    exit 1
-}
+Write-Host "Success" -ForegroundColor Green
 
 Write-Host "Creating DLLs directory: " -NoNewline
 New-Item -Path "$PYTHON_DIR\DLLs" -ItemType Directory | Out-Null
@@ -434,6 +428,19 @@ if ( Test-Path -Path "$profile.salt_bak" ) {
         Write-Host "Failed" -ForegroundColor Red
         exit 1
     }
+}
+
+#-------------------------------------------------------------------------------
+# Adding Registry Key for Python Launcher
+#-------------------------------------------------------------------------------
+Write-Host "Writing Python Launcher Registry Entries: " -NoNewline
+$PL_REG = "HKLM:\SOFTWARE\Python\PythonCore\$PY_VERSION\InstallPath"
+New-Item -Path $PL_REG -Value $PYTHON_DIR -Force | Out-Null
+if ( Test-Path -Path $PL_REG ) {
+    Write-Host "Success" -ForegroundColor Green
+} else {
+    Write-Host "Failed" -ForegroundColor Red
+    exit 1
 }
 
 #-------------------------------------------------------------------------------

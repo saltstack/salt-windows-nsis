@@ -237,6 +237,26 @@ if ( $Architecture -eq "x64" ) {
 }
 
 #-------------------------------------------------------------------------------
+# Remove binaries not needed by Salt
+#-------------------------------------------------------------------------------
+# These binaries may conflict with an existing Python installation. These
+# binaries are needed for Tiamat builds, but not for standard Salt packages
+# which we are building here
+$binaries = @(
+    "py.exe",
+    "venvlauncher.exe"
+)
+Write-Host "Removing Python binaries: " -NoNewline
+$binaries | ForEach-Object {
+    Remove-Item -Path "$BUILD_DIR_BIN\$_"
+        if ( ! ( Test-Path -Path "$PYTHON_DIR\$_") ) {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
+    }
+}
+Write-Host "Success" -ForegroundColor Green
+
+#-------------------------------------------------------------------------------
 # Make the Binaries in the Scripts directory portable
 #-------------------------------------------------------------------------------
 $binaries = Get-ChildItem -Path "$BUILD_DIR_BIN\Scripts" -Filter "*.exe"
