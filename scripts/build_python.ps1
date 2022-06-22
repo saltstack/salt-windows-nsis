@@ -230,6 +230,7 @@ if ( Test-Path -Path "$PYTHON_DIR" ) {
 }
 
 Write-Host "Moving Python binaries: " -NoNewline
+Move-Item -Path "$PY_BLD_DIR\py.exe" -Destination "$PYTHON_DIR" | Out-Null
 Move-Item -Path "$PY_BLD_DIR\python.exe" -Destination "$PYTHON_DIR" | Out-Null
 Move-Item -Path "$PY_BLD_DIR\python3.dll" -Destination "$PYTHON_DIR" | Out-Null
 Move-Item -Path "$PY_BLD_DIR\python38.dll" -Destination "$PYTHON_DIR" | Out-Null
