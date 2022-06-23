@@ -244,7 +244,10 @@ if ( $Architecture -eq "x64" ) {
 # which we are building here
 $binaries = @(
     "py.exe",
-    "venvlauncher.exe"
+    "pyw.exe",
+    "pythonw.exe",
+    "venvlauncher.exe",
+    "venvwlauncher.exe"
 )
 Write-Host "Removing Python binaries: " -NoNewline
 $binaries | ForEach-Object {
