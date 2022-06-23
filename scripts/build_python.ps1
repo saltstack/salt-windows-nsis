@@ -232,11 +232,14 @@ if ( Test-Path -Path "$PYTHON_DIR" ) {
 Write-Host "Moving Python binaries: " -NoNewline
 $binaries = @(
     "py.exe",
+    "pyw.exe",
     "python.exe",
+    "pythonw.exe",
     "python3.dll",
     "python38.dll",
     "vcruntime140.dll",
-    "venvlauncher.exe"
+    "venvlauncher.exe",
+    "venvwlauncher.exe"
 )
 $binaries | ForEach-Object {
     Move-Item -Path "$PY_BLD_DIR\$_" -Destination "$PYTHON_DIR" | Out-Null
