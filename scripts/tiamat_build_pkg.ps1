@@ -180,7 +180,7 @@ New-Item -Path "$prereqs_dir" -ItemType Directory -Force | Out-Null
 $url = "https://repo.saltproject.io/windows/dependencies/64/vcredist_x64_2013.exe"
 $name = "vcredist_x64_2013.exe"
 Write-Host "- Downloading Visual C Redistributable: " -NoNewLine
-& "$script_dir\download_url_file.ps1" -url $url -file "$prereqs_dir\$name" *> $null
+Invoke-WebRequest -Uri $url -OutFile "$prereqs_dir\$name" | Out-Null
 If (Test-Path "$prereqs_dir\$name") {
     Write-Host "Success" -ForegroundColor Green
 } Else {
@@ -191,7 +191,7 @@ If (Test-Path "$prereqs_dir\$name") {
 $url = "https://repo.saltproject.io/windows/dependencies/64/ucrt_x64.zip"
 $name = "ucrt_x64.zip"
 Write-Host "- Downloading Universal C Runtime: " -NoNewLine
-& "$script_dir\download_url_file.ps1" -url $url -file "$prereqs_dir\$name" *> $null
+Invoke-WebRequest -Uri $url -OutFile "$prereqs_dir\$name" | Out-Null
 If (Test-Path "$prereqs_dir\$name") {
     Write-Host "Success" -ForegroundColor Green
 } Else {
