@@ -158,7 +158,30 @@ If ("$bin_dir\ssm.exe") {
     exit 1
 }
 
-# TODO: Copy master/minion config files from salt project
+# Copy master/minion config files from salt project
+If (Test-Path -Path "$artifacts_dir/master")
+{
+    Write-Host "Copying master config: " -NoNewline
+    New-Item -Path $config_dir -ItemType Directory | Out-Null
+    Copy-Item -Path "$artifacts_dir\master" -Destination "$config_dir"
+    if (Test-Path -Path "$config_dir\master") {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
+    }
+}
+If (Test-Path -Path "$artifacts_dir/minion") {
+    Write-Host "Copying minion config: " -NoNewline
+    New-Item -Path $config_dir -ItemType Directory | Out-Null
+    Copy-Item -Path "$artifacts_dir\minion" -Destination "$config_dir"
+    if ( Test-Path -Path "$config_dir\minion" ) {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
+    }
+}
 
 #-------------------------------------------------------------------------------
 # Stage the PreReqs
