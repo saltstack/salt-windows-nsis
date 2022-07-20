@@ -171,7 +171,7 @@ If (! (Test-Path -Path "$config_dir")) {
 }
 If (Test-Path -Path "$artifacts_dir/master") {
     Write-Host "- Staging master config: " -NoNewline
-    Copy-Item -Path "$artifacts_dir\master" -Destination "$config_dir"
+    Move-Item -Path "$artifacts_dir\master" -Destination "$config_dir"
     if (Test-Path -Path "$config_dir\master") {
         Write-Host "Success" -ForegroundColor Green
     } else {
@@ -181,7 +181,7 @@ If (Test-Path -Path "$artifacts_dir/master") {
 }
 If (Test-Path -Path "$artifacts_dir/minion") {
     Write-Host "- Staging minion config: " -NoNewline
-    Copy-Item -Path "$artifacts_dir\minion" -Destination "$config_dir"
+    Move-Item -Path "$artifacts_dir\minion" -Destination "$config_dir"
     if ( Test-Path -Path "$config_dir\minion" ) {
         Write-Host "Success" -ForegroundColor Green
     } else {
