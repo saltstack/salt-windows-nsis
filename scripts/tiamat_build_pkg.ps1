@@ -159,11 +159,19 @@ If ("$bin_dir\ssm.exe") {
 }
 
 # Copy master/minion config files from salt project
-If (Test-Path -Path "$artifacts_dir/master")
-{
-    Write-Host "Copying master config: " -NoNewline
+If (! (Test-Path -Path "$config_dir")) {
+    Write-Host "- Creating config directory: " -NoNewline
     New-Item -Path $config_dir -ItemType Directory | Out-Null
-    Copy-Item -Path "$artifacts_dir\master" -Destination "$config_dir"
+    If (Test-Path -Path "$config_dir") {
+        Write-Host "Success" -ForegroundColor Green
+    } else {
+        Write-Host "Failed" -ForegroundColor Red
+        exit 1
+    }
+}
+If (Test-Path -Path "$artifacts_dir/master") {
+    Write-Host "- Staging master config: " -NoNewline
+    Move-Item -Path "$artifacts_dir\master" -Destination "$config_dir"
     if (Test-Path -Path "$config_dir\master") {
         Write-Host "Success" -ForegroundColor Green
     } else {
@@ -172,9 +180,8 @@ If (Test-Path -Path "$artifacts_dir/master")
     }
 }
 If (Test-Path -Path "$artifacts_dir/minion") {
-    Write-Host "Copying minion config: " -NoNewline
-    New-Item -Path $config_dir -ItemType Directory | Out-Null
-    Copy-Item -Path "$artifacts_dir\minion" -Destination "$config_dir"
+    Write-Host "- Staging minion config: " -NoNewline
+    Move-Item -Path "$artifacts_dir\minion" -Destination "$config_dir"
     if ( Test-Path -Path "$config_dir\minion" ) {
         Write-Host "Success" -ForegroundColor Green
     } else {
