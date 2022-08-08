@@ -264,7 +264,7 @@ Write-Host "Success" -ForegroundColor Green
 #-------------------------------------------------------------------------------
 $binaries = Get-ChildItem -Path "$BUILD_DIR_BIN\Scripts" -Filter "*.exe"
 $binaries | ForEach-Object {
-    Write-Host "Making $_.Name Portable: " -NoNewline
+    Write-Host "Making $_ Portable: " -NoNewline
     $before = $_.LastWriteTime
     Start-Process -FilePath "$PYTHON_BIN" `
                   -ArgumentList "$SCRIPT_DIR\portable.py", "-f", "$($_.FullName)" `
