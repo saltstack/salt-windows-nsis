@@ -37,7 +37,7 @@ $ErrorActionPreference = "Stop"
 # Script Variables
 $NSIS_DIR       = "$( ${env:ProgramFiles(x86)} )\NSIS"
 if ( $Architecture -eq "x64" ) {
-    $ARCH           = "amd64"
+    $ARCH           = "AMD64"
     $SALT_DEP_URL   = "https://repo.saltproject.io/windows/dependencies/64"
 } else {
     $ARCH           = "x86"
