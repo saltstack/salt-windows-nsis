@@ -12,6 +12,7 @@ clean_env.ps1
 #>
 
 # Script Preferences
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 $ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
 
