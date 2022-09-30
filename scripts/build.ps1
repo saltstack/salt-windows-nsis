@@ -46,6 +46,7 @@ param(
         #"3.9.13",
         #"3.9.12",
         #"3.9.11",
+        "3.8.14",
         "3.8.13",
         "3.8.12",
         "3.8.11",
@@ -56,8 +57,8 @@ param(
     # 3.8 for now. Pycurl stopped building wheel files after 7.43.0.5 which
     # supported up to 3.8. So we're pinned to the latest version of Python 3.8.
     # We may have to drop support for pycurl.
-    # Default is: 3.8.13
-    [String] $PythonVersion = "3.8.13"
+    # Default is: 3.8.14
+    [String] $PythonVersion = "3.8.14"
 )
 
 # Script Preferences
