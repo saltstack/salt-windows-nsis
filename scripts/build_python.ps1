@@ -15,9 +15,16 @@ param(
     [Parameter(Mandatory=$false)]
     [ValidatePattern("^\d{1,2}.\d{1,2}.\d{1,2}$")]
     [ValidateSet(
+        # Until Pythonnet supports newer versions
+        #"3.11.0",
+        #"3.10.8",
+        #"3.10.7",
+        #"3.10.6",
         #"3.10.5",
         #"3.10.4",
         #"3.10.3",
+        #"3.9.15",
+        #"3.9.14",
         #"3.9.13",
         #"3.9.12",
         #"3.9.11",
