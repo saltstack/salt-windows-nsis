@@ -8,7 +8,7 @@ structure as created by the Python installer in C:\Python##. This includes
 all header files, scripts, dlls, library files, and pip.
 
 .EXAMPLE
-build_python.ps1 -Version 3.8.13
+build_python.ps1 -Version 3.8.16
 
 #>
 param(
@@ -28,6 +28,7 @@ param(
         #"3.9.13",
         #"3.9.12",
         #"3.9.11",
+        "3.8.16",
         "3.8.15",
         "3.8.14",
         "3.8.13",
@@ -40,8 +41,8 @@ param(
     # 3.8 for now. Pycurl stopped building wheel files after 7.43.0.5 which
     # supported up to 3.8. So we're pinned to the latest version of Python 3.8.
     # We may have to drop support for pycurl.
-    # Default is: 3.8.15
-    [String] $Version = "3.8.15",
+    # Default is: 3.8.16
+    [String] $Version = "3.8.16",
 
     [Parameter(Mandatory=$false)]
     [ValidateSet("x86", "x64")]
