@@ -48,7 +48,7 @@ if ( $Architecture -eq "x64" ) {
 # Python Variables
 # TODO: These need to be moved to a Script option
 $PY_VERSION     = "3.8"
-$PY_DOT_VERSION = "3.8.16"
+$PY_DOT_VERSION = "3.8.17"
 $PYTHON_DIR     = "C:\Python$($PY_VERSION -replace "\.")"
 $PYTHON_BIN     = "$PYTHON_DIR\python.exe"
 $SCRIPTS_DIR    = "$PYTHON_DIR\Scripts"
