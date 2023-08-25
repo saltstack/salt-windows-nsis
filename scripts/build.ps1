@@ -17,7 +17,7 @@ and are called in this order:
 build.ps1
 
 .EXAMPLE
-build.ps1 -Version 3005 -PythonVersion 3.8.17
+build.ps1 -Version 3005 -PythonVersion 3.8.18
 
 #>
 
@@ -52,6 +52,7 @@ param(
         #"3.9.13",
         #"3.9.12",
         #"3.9.11",
+        "3.8.18",
         "3.8.17",
         "3.8.16",
         "3.8.15",
@@ -66,8 +67,8 @@ param(
     # 3.8 for now. Pycurl stopped building wheel files after 7.43.0.5 which
     # supported up to 3.8. So we're pinned to the latest version of Python 3.8.
     # We may have to drop support for pycurl.
-    # Default is: 3.8.17
-    [String] $PythonVersion = "3.8.17"
+    # Default is: 3.8.18
+    [String] $PythonVersion = "3.8.18"
 )
 
 # Script Preferences
@@ -112,7 +113,6 @@ If (!(Get-IsAdministrator)) {
 # Variables
 #-------------------------------------------------------------------------------
 $PROJECT_DIR    = $(git rev-parse --show-toplevel)
-$SALT_REPO_URL  = "https://github.com/saltstack/salt"
 $SALT_SRC_DIR   = "$( (Get-Item $PROJECT_DIR).Parent.FullName )\salt"
 
 #-------------------------------------------------------------------------------
